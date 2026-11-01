@@ -2,7 +2,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs;
-use std::io::Read;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -91,6 +91,16 @@ fn quarantine(path: &Path) -> std::io::Result<PathBuf> {
 }
 
 fn main() {
+    if std::env::args().count() <= 1 {
+        println!("TitanDefender Engine v0.1.0");
+        println!("Usage: titan <command> [args]");
+        println!("Commands: scan, quarantine, list-sigs, watch");
+        println!("Example: titan scan C:\\folder --quick");
+        println!();
+        println!("Press Enter to exit...");
+        let _ = std::io::stdin().read_line(&mut String::new());
+        return;
+    }
     let cli = Cli::parse();
     match cli.cmd {
         Commands::Scan { path, quick, json: args_json } => {
