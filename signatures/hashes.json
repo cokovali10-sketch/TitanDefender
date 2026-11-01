@@ -1,0 +1,504 @@
+{
+  "signatures": [
+    {
+      "hash": "934019082af279e986c6eeb6b7895cf87e39ed1a7eda068ae364304661bc3032",
+      "name": "TestThreat-0",
+      "severity": 1
+    },
+    {
+      "hash": "298235e15eab6357599024a6d01c6a80689f9f0a14d4f1e30e03f555e7a1ffb4",
+      "name": "TestThreat-1",
+      "severity": 2
+    },
+    {
+      "hash": "19c346a710992ef12fbdc6d272aea974acacac2d7622f9d9e3cef8ccefdd33be",
+      "name": "TestThreat-2",
+      "severity": 3
+    },
+    {
+      "hash": "bccd5a811024bc1e640325bb46e812b61bdea87174682426240b9bedf99e87c4",
+      "name": "TestThreat-3",
+      "severity": 1
+    },
+    {
+      "hash": "c2918031600e6e29447caccfc1ef1ddb65085832d09c3ea50be3717ba7e01a8f",
+      "name": "TestThreat-4",
+      "severity": 2
+    },
+    {
+      "hash": "c42f4136a380d7c0b684f8122c2bd59c3d6945c713b9d9f71dadc484b9069646",
+      "name": "TestThreat-5",
+      "severity": 3
+    },
+    {
+      "hash": "8a77a594b443e5bc6604c7a0ffc7ce95ace4cf9b5a298bcf90431fa9bee0f8d3",
+      "name": "TestThreat-6",
+      "severity": 1
+    },
+    {
+      "hash": "8cde9852140b8a55bf8c041f6f467fd340370380a91489db4a2e406dfa2faf7b",
+      "name": "TestThreat-7",
+      "severity": 2
+    },
+    {
+      "hash": "c2d5e7b4718fdff91b9875072a36e4bd92084e4674ea599e777568e204c68a50",
+      "name": "TestThreat-8",
+      "severity": 3
+    },
+    {
+      "hash": "9b8cd9fc35a939553797314bd43a12870c479991bf900077600610d87ecb69a4",
+      "name": "TestThreat-9",
+      "severity": 1
+    },
+    {
+      "hash": "db055e6e214bfce2e006623be23bcee1390963ce252748fba6b628d45cd8fbba",
+      "name": "TestThreat-10",
+      "severity": 2
+    },
+    {
+      "hash": "fff55490a94340cc3564beb8287fb2cf5f0b8f785fb4938da608387e1583b066",
+      "name": "TestThreat-11",
+      "severity": 3
+    },
+    {
+      "hash": "4297dd90dba43bb85158d368e14525cc64c6ba3f1ec9967e009e1f92ff1c5d79",
+      "name": "TestThreat-12",
+      "severity": 1
+    },
+    {
+      "hash": "dc32bd9ccb84c780a60e177916ef7fc427429a139006de05c4635ebf7197caea",
+      "name": "TestThreat-13",
+      "severity": 2
+    },
+    {
+      "hash": "7178875aa1f067a73b17a95cf7808e5d3271f780cd6daf27c1c6f294cebc3dc1",
+      "name": "TestThreat-14",
+      "severity": 3
+    },
+    {
+      "hash": "b8f2f328d62490447628e2773c125093af1ceab9d19bae1405d82b9d39a2155c",
+      "name": "TestThreat-15",
+      "severity": 1
+    },
+    {
+      "hash": "36e89845be93ffe49d47064e79fad0fa07b542399043cc32ec85cbf79036e8d4",
+      "name": "TestThreat-16",
+      "severity": 2
+    },
+    {
+      "hash": "8d559a50ebc9162630dd42dffa89d2f04bff82d21539a32e95f384cdc6390084",
+      "name": "TestThreat-17",
+      "severity": 3
+    },
+    {
+      "hash": "dbcdc000707f572b944a2f9c1bc108903737db6523e87ffac6ef52b1001a8b16",
+      "name": "TestThreat-18",
+      "severity": 1
+    },
+    {
+      "hash": "f3a77ca753b1948f2cd52373fa80c9bd0733212e56d07a6efd5a4c72684f0350",
+      "name": "TestThreat-19",
+      "severity": 2
+    },
+    {
+      "hash": "e76aa257a576caeb0b7532cf88206546745bd7110a667e188fe0d85abda40d1b",
+      "name": "TestThreat-20",
+      "severity": 3
+    },
+    {
+      "hash": "62209ad9a029a11af4c54735463ebd9b66f3695181a6c7681c589c1f26b00d82",
+      "name": "TestThreat-21",
+      "severity": 1
+    },
+    {
+      "hash": "263066586e8af09746056b6257e442836d19401514f1de42f861416aeab74c5e",
+      "name": "TestThreat-22",
+      "severity": 2
+    },
+    {
+      "hash": "1ec7184c718aa63f360a96900450fb27af8868683a55b0620bc11dac8707f66f",
+      "name": "TestThreat-23",
+      "severity": 3
+    },
+    {
+      "hash": "e102454ec96cc118dca3ed22adad3bf392f4b946ff59f5c49a8a3e3ab7fc9f36",
+      "name": "TestThreat-24",
+      "severity": 1
+    },
+    {
+      "hash": "6eead6924adfc9c6ba41514f405f6a3211184159d17d191f1619b1e0af4d9053",
+      "name": "TestThreat-25",
+      "severity": 2
+    },
+    {
+      "hash": "6ae2ad8d4e57edf4f8316b9fdc3d82b815de9c716657668dca2c72a4407b39c4",
+      "name": "TestThreat-26",
+      "severity": 3
+    },
+    {
+      "hash": "4fa2c4c87b9279979ba1850efdc913cf4b911cad0c96eb1b09c8ba671f4eafcf",
+      "name": "TestThreat-27",
+      "severity": 1
+    },
+    {
+      "hash": "9335ff337d0d7d03191b8c34b8e6675279f6c471d6553441b4f4a0aac6fce9df",
+      "name": "TestThreat-28",
+      "severity": 2
+    },
+    {
+      "hash": "20ecae5d02dc182a3e652e02fc970bb30158d0f5d9fb789d6e67e90c17469ba0",
+      "name": "TestThreat-29",
+      "severity": 3
+    },
+    {
+      "hash": "78291bfbf13b22554edd5ff126a31b25ac2a26f7dda4b68048a5faa938fe427f",
+      "name": "TestThreat-30",
+      "severity": 1
+    },
+    {
+      "hash": "ea9af18f08ca722a906f5e125357bc05427d0de4a2fd609324003f1f8cf5c41f",
+      "name": "TestThreat-31",
+      "severity": 2
+    },
+    {
+      "hash": "5920aea1d53f859b1b878456a991b72bb0dddf9e8f82490499254f5a719350d3",
+      "name": "TestThreat-32",
+      "severity": 3
+    },
+    {
+      "hash": "1f121213c489204e73b84655f9233652b196fa2fa377cd8d839405f25c8158f1",
+      "name": "TestThreat-33",
+      "severity": 1
+    },
+    {
+      "hash": "1470dcc7867a78df95ed0343b7daafe0af076257f00c41b4b07199188e36eaa9",
+      "name": "TestThreat-34",
+      "severity": 2
+    },
+    {
+      "hash": "907e1627ec213300f879f40cd8f9916703ad83f011283e257be557e13caa99a1",
+      "name": "TestThreat-35",
+      "severity": 3
+    },
+    {
+      "hash": "c0a1f841aaa6c098b00ca488a7cd9005d66e3f7add408fad9fd55acf7a075356",
+      "name": "TestThreat-36",
+      "severity": 1
+    },
+    {
+      "hash": "12aa69fe21ed340dcd9bb3cb92fb4612aaa5f967a78496cb54c3143220238a7c",
+      "name": "TestThreat-37",
+      "severity": 2
+    },
+    {
+      "hash": "d70519201bb49419fdc533175642ec132752cd6523bb4e2bd655dd1478a7825a",
+      "name": "TestThreat-38",
+      "severity": 3
+    },
+    {
+      "hash": "faee778602f87780ffa0d7113875610edb0f02487992c8dd88fb9960d2e73a41",
+      "name": "TestThreat-39",
+      "severity": 1
+    },
+    {
+      "hash": "d17df72e4ad3cd57f3bc12cbaead5a8e1e2d12de9991b6670069a6d65b9c6c68",
+      "name": "TestThreat-40",
+      "severity": 2
+    },
+    {
+      "hash": "268c87a61920f059654be1527dc29a5e6f2281e3a4261cce18e34ff2442a9255",
+      "name": "TestThreat-41",
+      "severity": 3
+    },
+    {
+      "hash": "3d3356d09853ee9ae3c8eccd771a31f58e92e7bdb0ba0f24b724b43d4a3865f2",
+      "name": "TestThreat-42",
+      "severity": 1
+    },
+    {
+      "hash": "b48cab0271f402eee1d63f3e54812fe2a3e7a2e5bc26df594ce29562e5141056",
+      "name": "TestThreat-43",
+      "severity": 2
+    },
+    {
+      "hash": "3c352ee0ef104bd3cf1f3286b219c2c9e75b3d385885062b0f96db68779c33da",
+      "name": "TestThreat-44",
+      "severity": 3
+    },
+    {
+      "hash": "bba8bab071942873060dde13609e65bb9f5db42c5e8f172be9711f81b50a15bf",
+      "name": "TestThreat-45",
+      "severity": 1
+    },
+    {
+      "hash": "f531afd882e429f1d24282f856928fd4c8b24bc4c0540b67a8fd36b46e390c8e",
+      "name": "TestThreat-46",
+      "severity": 2
+    },
+    {
+      "hash": "565a79b3f2534b871b506c244200d1d586e1c2ebcf807a74af40c7e6e222c44b",
+      "name": "TestThreat-47",
+      "severity": 3
+    },
+    {
+      "hash": "e6f761d5327c1f0af32cda606f57eab4fc51df7822d157b2d4478df3a6342466",
+      "name": "TestThreat-48",
+      "severity": 1
+    },
+    {
+      "hash": "66f8a88cd625a74f0ac0361718637f4244ca27dd1d51b3cb27661b917bfb827d",
+      "name": "TestThreat-49",
+      "severity": 2
+    },
+    {
+      "hash": "19014f6e2d964e7f8b06bf4626e8cd96c6cae45d750765be713d4a78402e3a51",
+      "name": "TestThreat-50",
+      "severity": 3
+    },
+    {
+      "hash": "81952f5d8ec9a022b755ae0e56bf9e0780e8982409f459d5db86007613b89458",
+      "name": "TestThreat-51",
+      "severity": 1
+    },
+    {
+      "hash": "bc417b1ffc1ca7b534aaf5b0227b01bba8276fe13cc68b0ac73c2c32454684be",
+      "name": "TestThreat-52",
+      "severity": 2
+    },
+    {
+      "hash": "64410c6b334b140ce449f46fae3656c7adbb7439cf370169070f845ded052f80",
+      "name": "TestThreat-53",
+      "severity": 3
+    },
+    {
+      "hash": "aa40e00c6ed7140d8e162b81921290723b479920a5d33fed4dd2b8add239d8cd",
+      "name": "TestThreat-54",
+      "severity": 1
+    },
+    {
+      "hash": "a6e96c509de0dad05a4c99f94a101714f8eb6c3f1e2b24731b50bb74f8517fdd",
+      "name": "TestThreat-55",
+      "severity": 2
+    },
+    {
+      "hash": "31b65035f50b7765e302e49991d5d07525d875728859d09864b8d83fcda68d84",
+      "name": "TestThreat-56",
+      "severity": 3
+    },
+    {
+      "hash": "4040e49f14e8527690b905efdc8d01c1bece988a57078326d19fa24f1de8cc19",
+      "name": "TestThreat-57",
+      "severity": 1
+    },
+    {
+      "hash": "8fa803c2ec9734645d18fc94ac193c2d8bb1442210e7208bb76e6e2f2177ffaa",
+      "name": "TestThreat-58",
+      "severity": 2
+    },
+    {
+      "hash": "4a77a571f24bfa6c09ce67d5b5d1ce2f0843627fad7d568bbc02c6dcd666241b",
+      "name": "TestThreat-59",
+      "severity": 3
+    },
+    {
+      "hash": "c1e3a0aa9af308fce2766745bf5cad76ac3a139936ef1587c45d0b6660b62725",
+      "name": "TestThreat-60",
+      "severity": 1
+    },
+    {
+      "hash": "5cceb1c48af8da4da842bf596369279c8db777074cfa914c5588003e663b75fa",
+      "name": "TestThreat-61",
+      "severity": 2
+    },
+    {
+      "hash": "b0ab663eee45173a266e1236c298a2818ac4a68f441ad543c4e65ece3ac8a93e",
+      "name": "TestThreat-62",
+      "severity": 3
+    },
+    {
+      "hash": "0e9ac6f2c1e8eb76dd11579877e9b7f81a42ec0de9bfe65cf056bd3ba95f0911",
+      "name": "TestThreat-63",
+      "severity": 1
+    },
+    {
+      "hash": "6dd873f04c607796ae9df7ae03dd0c3581e6ed9f896743095f29e633b90a5ac6",
+      "name": "TestThreat-64",
+      "severity": 2
+    },
+    {
+      "hash": "30a725c6c02c1b3dc1b8146af71c1caed3e1af7d93fef1a696c37cbd51a9058a",
+      "name": "TestThreat-65",
+      "severity": 3
+    },
+    {
+      "hash": "4816f1c6702c2d63da22c7ac780042cd167ff3eb59e1183c93d17aa86eb85249",
+      "name": "TestThreat-66",
+      "severity": 1
+    },
+    {
+      "hash": "16a49abb352657c8d95ebce462c3f520736163a020f6d13b34426364d150ad5a",
+      "name": "TestThreat-67",
+      "severity": 2
+    },
+    {
+      "hash": "cd2d68685dd064e677c40326389d224f9e03fdf8d6c3d850ef942dde1edc20de",
+      "name": "TestThreat-68",
+      "severity": 3
+    },
+    {
+      "hash": "8b7ef86fcaaa474f64a83c51a1705e7be5d2b98ecc28a9f65d7f0f1080f7d6c9",
+      "name": "TestThreat-69",
+      "severity": 1
+    },
+    {
+      "hash": "eb8b23004a955b54a63c19d3d17099b494e446916869442c1a5cd81d4c332028",
+      "name": "TestThreat-70",
+      "severity": 2
+    },
+    {
+      "hash": "f9c7789ba6dfbcdbd4e7f6d7964c79e1aa81d2196bbaf207e0da893dc589b4b8",
+      "name": "TestThreat-71",
+      "severity": 3
+    },
+    {
+      "hash": "4d9505b7f7aaf8129b57393e78e6aa860408a44d06de19407b5148c690fc7e56",
+      "name": "TestThreat-72",
+      "severity": 1
+    },
+    {
+      "hash": "491b1c5313e29930af0ed93185eb9651339893c808044fb14f533ee9e5909687",
+      "name": "TestThreat-73",
+      "severity": 2
+    },
+    {
+      "hash": "8a78e37652fa7d34d4941ea4a91106ed45ff259251ff53cfcfa065c4832497ec",
+      "name": "TestThreat-74",
+      "severity": 3
+    },
+    {
+      "hash": "e8c298d43112642f06cdd091957a3960d33c328e31862e6f9c987b4c35e79d3b",
+      "name": "TestThreat-75",
+      "severity": 1
+    },
+    {
+      "hash": "a0b8af320d9f657031ed1c16f11b0f19d7eca00c79f1964e66bcf17a39799a0a",
+      "name": "TestThreat-76",
+      "severity": 2
+    },
+    {
+      "hash": "2b194beacbb205800d936bfdff68b9752e11643b7960eca7bab6dff80ca4eda4",
+      "name": "TestThreat-77",
+      "severity": 3
+    },
+    {
+      "hash": "aec47d31c85bf2d549539cb36eaa54dab0564889e2f8e69b5de172950c49b886",
+      "name": "TestThreat-78",
+      "severity": 1
+    },
+    {
+      "hash": "32d93350196dab5f2404e7e6725c0406049cb1bfb84d6e02e59b85cca38bd089",
+      "name": "TestThreat-79",
+      "severity": 2
+    },
+    {
+      "hash": "f1d6804c7fbd7dfd761190098b658e0bd23449f96579dc923b2610f8475537c8",
+      "name": "TestThreat-80",
+      "severity": 3
+    },
+    {
+      "hash": "670389e3f3bfe03324a81b8db062bb2aeb983082971a0fac25db3e1cd80bfef6",
+      "name": "TestThreat-81",
+      "severity": 1
+    },
+    {
+      "hash": "3337574b52c1220c947bd1b431cb8ac04077a389b0dca49d531b6dc5ab10e01a",
+      "name": "TestThreat-82",
+      "severity": 2
+    },
+    {
+      "hash": "2bb4bb367672e78873771cff23becb1df76821a124a1d8daa9729edfd31a81be",
+      "name": "TestThreat-83",
+      "severity": 3
+    },
+    {
+      "hash": "741b784e23f8c39d2ae7903de80ee428ae389b9d33c6745a933f5a74476eb76d",
+      "name": "TestThreat-84",
+      "severity": 1
+    },
+    {
+      "hash": "fddfab571d32420668ae43761487bc8bac814ce582450bea7ea2c18f2cb4deb3",
+      "name": "TestThreat-85",
+      "severity": 2
+    },
+    {
+      "hash": "d0bcece884fcfc6922c8ea8a0782020f92cf40872ec00f7c2a171fe6defe987c",
+      "name": "TestThreat-86",
+      "severity": 3
+    },
+    {
+      "hash": "eef2337d83d8b469fd06f4ef89fc0012586364addaf2a4583f465372d280c32f",
+      "name": "TestThreat-87",
+      "severity": 1
+    },
+    {
+      "hash": "6b09fbb6b725188f3f758d8c59efb2432df8a89ec5320f226944660754980aad",
+      "name": "TestThreat-88",
+      "severity": 2
+    },
+    {
+      "hash": "d73496cd921373a9f5e689984f7c2e48f7464d6d1b41e1e0f6ab4c97a527e33d",
+      "name": "TestThreat-89",
+      "severity": 3
+    },
+    {
+      "hash": "aaf3109e9aac191e01c6a3d2a81768fe0eb4c2270c71952336641df57126988e",
+      "name": "TestThreat-90",
+      "severity": 1
+    },
+    {
+      "hash": "73e40e889cbc3362b8f49586383687be7aace926e80630343e09f04255f1f32d",
+      "name": "TestThreat-91",
+      "severity": 2
+    },
+    {
+      "hash": "10cf7c836a26423230370243e89650a96868d7cd253f038e363c4bf482d0404b",
+      "name": "TestThreat-92",
+      "severity": 3
+    },
+    {
+      "hash": "4bc82ccca7ee6dec58c767761a76a453c1adaf48cec5fad34771b61db82ba201",
+      "name": "TestThreat-93",
+      "severity": 1
+    },
+    {
+      "hash": "30401201df56583bf3ec033f28891c80c4f5322ed962507d0ec7c946ebeae8f4",
+      "name": "TestThreat-94",
+      "severity": 2
+    },
+    {
+      "hash": "d91d890c66fdd1638d31aaf8140dc231d11772142ad71d9656ff2990b4854fb8",
+      "name": "TestThreat-95",
+      "severity": 3
+    },
+    {
+      "hash": "de18ba9f297729964d02ba8253981f070c16412da3792addb72f1f8817f345da",
+      "name": "TestThreat-96",
+      "severity": 1
+    },
+    {
+      "hash": "dfa02d5a699eb9eed3b629bacc7a5b012f61ddd6ba95f27d8f8f0d71223ecd0e",
+      "name": "TestThreat-97",
+      "severity": 2
+    },
+    {
+      "hash": "dd7d02bf67f702a70c330d7d3718fc7e099d71f943e1f49d813b102442226f63",
+      "name": "TestThreat-98",
+      "severity": 3
+    },
+    {
+      "hash": "648c777fab26a54c287bbf91f5cda8f8abcd87cc7585a62004cb607c562b218b",
+      "name": "TestThreat-99",
+      "severity": 1
+    }
+  ]
+}

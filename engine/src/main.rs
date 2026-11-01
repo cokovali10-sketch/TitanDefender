@@ -17,6 +17,7 @@ struct Cli {
 enum Commands {
     Scan { path: String, #[arg(short, long)] quick: bool, #[arg(long)] json: bool },
     Quarantine { path: String },
+    Quarantines,
     ListSigs,
     Watch { path: String },
 }
@@ -51,7 +52,18 @@ fn sha256_file(path: &Path) -> Option<String> {
 }
 
 fn load_sigs() -> SigDb {
-    // embedded minimal db
+    // try loading from signatures/hashes.json
+    let candidates = ["signatures/hashes.json", "hashes.json", "../signatures/hashes.json"];
+    for c in candidates {
+        if let Ok(data) = fs::read_to_string(c) {
+            if let Ok(db) = serde_json::from_str::<SigDb>(&data) {
+                if !db.signatures.is_empty() {
+                    return db;
+                }
+            }
+        }
+    }
+    // fallback embedded
     SigDb {
         signatures: vec![
             Signature { hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".into(), name: "EmptyFile (test)".into(), severity: 1 },
@@ -125,8 +137,21 @@ fn main() {
         }
         Commands::ListSigs => {
             let db = load_sigs();
+            println!("Loaded {} signatures", db.signatures.len());
             for s in &db.signatures {
                 println!("{} {} (sev {})", s.hash, s.name, s.severity);
+            }
+        }
+        Commands::Quarantines => {
+            let qdir = dirs::home_dir().unwrap_or_default().join(".titan").join("quarantine");
+            if !qdir.exists() {
+                println!("Quarantine empty.");
+            } else {
+                for e in fs::read_dir(&qdir).unwrap() {
+                    if let Ok(e) = e {
+                        println!("{}", e.file_name().to_string_lossy());
+                    }
+                }
             }
         }
         Commands::Watch { path } => {
