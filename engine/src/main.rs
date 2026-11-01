@@ -71,7 +71,7 @@ fn scan_path(root: &Path, quick: bool) -> Vec<ScanHit> {
                 if sig.hash == hash {
                     hits.push(ScanHit {
                         path: path.display().to_string(),
-                        hash,
+                        hash: hash.clone(),
                         threat: sig.name.clone(),
                         severity: sig.severity,
                     });
