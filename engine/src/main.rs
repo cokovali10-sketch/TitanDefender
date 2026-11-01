@@ -104,13 +104,36 @@ fn quarantine(path: &Path) -> std::io::Result<PathBuf> {
 
 fn main() {
     if std::env::args().count() <= 1 {
-        println!("TitanDefender Engine v0.1.0");
-        println!("Usage: titan <command> [args]");
-        println!("Commands: scan, quarantine, list-sigs, watch");
-        println!("Example: titan scan C:\\folder --quick");
-        println!();
-        println!("Press Enter to exit...");
-        let _ = std::io::stdin().read_line(&mut String::new());
+        loop {
+            println!();
+            println!("================ TitanDefender ================");
+            println!(" 1) Quick scan (common locations)");
+            println!(" 2) Custom scan");
+            println!(" 3) List signatures");
+            println!(" 4) Real-time watch (info)");
+            println!(" 5) Quarantine list (info)");
+            println!(" 0) Exit");
+            println!("==============================================");
+            print!("Choice: ");
+            use std::io::Write;
+            std::io::stdout().flush().unwrap();
+            let mut input = String::new();
+            if std::io::stdin().read_line(&mut input).is_err() { break; }
+            match input.trim() {
+                "1" => { let h = scan_path(std::path::Path::new("C:\\"), true); println!("Threats: {}", h.len()); for x in &h { println!("[{}] {} -> {}", x.severity, x.threat, x.path); } }
+                "2" => {
+                    print!("Path: "); std::io::stdout().flush().unwrap();
+                    let mut pth = String::new(); std::io::stdin().read_line(&mut pth).unwrap();
+                    let h = scan_path(std::path::Path::new(pth.trim()), false);
+                    println!("Threats: {}", h.len()); for x in &h { println!("[{}] {} -> {}", x.severity, x.threat, x.path); }
+                }
+                "3" => { let db = load_sigs(); println!("Loaded {} sigs", db.signatures.len()); }
+                "4" => { println!("Run: titan watch <path>"); }
+                "5" => { println!("Run: titan quarantines"); }
+                "0" => break,
+                _ => println!("Invalid choice"),
+            }
+        }
         return;
     }
     let cli = Cli::parse();
