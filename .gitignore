@@ -2,3 +2,7 @@
 node_modules/
 *.exe
 .matrix_sandbox/
+
+ui/build/
+ui/dist/
+*.exe
