@@ -18,6 +18,7 @@ enum Commands {
     Scan { path: String, #[arg(short, long)] quick: bool },
     Quarantine { path: String },
     ListSigs,
+    Watch { path: String },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -114,6 +115,33 @@ fn main() {
             let db = load_sigs();
             for s in &db.signatures {
                 println!("{} {} (sev {})", s.hash, s.name, s.severity);
+            }
+        }
+        Commands::Watch { path } => {
+            use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+            use std::sync::mpsc::channel;
+            let (tx, rx) = channel();
+            let mut watcher = RecommendedWatcher::new(tx, Config::default()).unwrap();
+            watcher.watch(Path::new(&path), RecursiveMode::Recursive).unwrap();
+            println!("Watching {} for changes...", path);
+            for res in rx {
+                match res {
+                    Ok(event) => {
+                        for p in event.paths {
+                            if p.is_file() {
+                                if let Some(h) = sha256_file(&p) {
+                                    let db = load_sigs();
+                                    for sig in &db.signatures {
+                                        if sig.hash == h {
+                                            println!("[THREAT] {} -> {}", sig.name, p.display());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => eprintln!("watch error: {}", e),
+                }
             }
         }
     }
