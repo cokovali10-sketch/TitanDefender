@@ -15,7 +15,7 @@ struct Cli {
 
 #[derive(clap::Subcommand, Debug)]
 enum Commands {
-    Scan { path: String, #[arg(short, long)] quick: bool },
+    Scan { path: String, #[arg(short, long)] quick: bool, #[arg(long)] json: bool },
     Quarantine { path: String },
     ListSigs,
     Watch { path: String },
@@ -93,10 +93,12 @@ fn quarantine(path: &Path) -> std::io::Result<PathBuf> {
 fn main() {
     let cli = Cli::parse();
     match cli.cmd {
-        Commands::Scan { path, quick } => {
+        Commands::Scan { path, quick, json: args_json } => {
             println!("Scanning: {}", path);
             let hits = scan_path(Path::new(&path), quick);
-            if hits.is_empty() {
+            if args_json {
+                println!("{}", serde_json::to_string_pretty(&hits).unwrap());
+            } else if hits.is_empty() {
                 println!("No threats found.");
             } else {
                 for h in &hits {
