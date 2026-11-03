@@ -88,6 +88,9 @@ class App(QMainWindow):
         for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("deep","🔬  Глубокий скан"),("optimize","⚡  Оптимизация"),("quarantine","🔒  Карантин"),("history","📜  История"),("settings","⚙️  Настройки")]:
             b = QPushButton(txt); b.setProperty("class","nav"); b.clicked.connect(lambda _, k=key: self.switch(k))
             sl.addWidget(b); self.nav_btns[key] = b
+        theme_btn = QPushButton("??????? ????")
+        theme_btn.clicked.connect(self.toggle_theme)
+        sl.addWidget(theme_btn)
         sl.addStretch()
         self.status_pill = QLabel("● Защищено")
         self.status_pill.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
@@ -302,6 +305,15 @@ class App(QMainWindow):
                 self.hlog.append(f"[{e['time']}] {e['args']}\n{e['output'][:300]}\n{'-'*40}")
         except Exception as ex:
             self.hlog.setPlainText(f"Нет истории: {ex}")
+
+    def toggle_theme(self):
+        if getattr(self, "_light", False):
+            self.setStyleSheet(QSS)
+            self._light = False
+        else:
+            light = QSS.replace("#0a0e1a","#f8fafc").replace("#080c18","#e2e8f0").replace("#0f172a","#ffffff").replace("#111827","#ffffff").replace("#e2e8f0","#0f172a").replace("#64748b","#475569").replace("#1e293b","#cbd5e1").replace("#334155","#cbd5e1")
+            self.setStyleSheet(light)
+            self._light = True
 
 def main():
     app = QApplication(sys.argv)
