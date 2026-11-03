@@ -3,7 +3,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
     QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget, QLineEdit,
     QCheckBox, QComboBox, QSpinBox, QMessageBox, QSizePolicy)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtGui import QFont, QColor, QIcon
+from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 ENGINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "titan.exe")
 HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scan_history.json")
@@ -62,6 +63,7 @@ class App(QMainWindow):
         self.worker = None
         self.settings = self._load_settings()
         self._build()
+        self._setup_tray()
         self._timer = QTimer(self); self._timer.timeout.connect(self._tick_status); self._timer.start(5000)
 
     def _load_settings(self):
@@ -74,6 +76,19 @@ class App(QMainWindow):
         try:
             json.dump(self.settings, open(SETTINGS, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
         except Exception: pass
+
+    def _setup_tray(self):
+        self.tray = QSystemTrayIcon(self)
+        self.tray.setToolTip("TitanDefender")
+        menu = QMenu()
+        a1 = menu.addAction("???????")
+        a1.triggered.connect(self.showNormal)
+        a2 = menu.addAction("??????? ????")
+        a2.triggered.connect(self.quick_scan)
+        a3 = menu.addAction("?????")
+        a3.triggered.connect(self.close)
+        self.tray.setContextMenu(menu)
+        self.tray.show()
 
     def _build(self):
         central = QWidget(); self.setCentralWidget(central)
