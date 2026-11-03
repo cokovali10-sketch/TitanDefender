@@ -1,6 +1,6 @@
 import subprocess, os, threading, sys, json, datetime
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget,
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget, QLineEdit,
     QCheckBox, QComboBox, QSpinBox, QMessageBox, QSizePolicy)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QColor
@@ -192,7 +192,7 @@ class App(QMainWindow):
         if d: self.deep_path.setText(d)
     def deep_scan(self):
         self.switch("deep")
-        self.run_engine(["deepscan", self.deep_path.text()], target=self.dlog)
+        self.run_engine(["deep-scan", self.deep_path.text()], target=self.dlog)
 
     def _optimize_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
@@ -265,9 +265,18 @@ class App(QMainWindow):
         d = QFileDialog.getExistingDirectory(self, "Выбрать папку")
         if d: self.run_engine(["scan", d])
     def list_sigs(self): self.run_engine(["list-sigs"])
+    def yara_scan(self):
+        d = QFileDialog.getExistingDirectory(self, "????? ??? YARA-?????")
+        if d: self.run_engine(["yara-scan", d])
     def quarantine_list(self):
         self.switch("quarantine")
         self.run_engine(["quarantines"], target=self.qlog)
+    def restore_quarantine(self):
+        name = self.restore_input.text().strip()
+        if name: self.run_engine(["quarantine-restore", name], target=self.qlog)
+    def delete_quarantine(self):
+        name = self.restore_input.text().strip()
+        if name: self.run_engine(["quarantine-delete", name], target=self.qlog)
     def load_history(self):
         try:
             data = json.load(open(HISTORY, encoding="utf-8"))
