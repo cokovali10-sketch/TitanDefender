@@ -1,126 +1,187 @@
-import subprocess, os, threading, sys
+import subprocess, os, threading, sys, json, datetime
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QMessageBox)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize
-from PyQt6.QtGui import QFont, QPalette, QColor, QIcon
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget,
+    QSizePolicy, QScrollArea)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 
 ENGINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "titan.exe")
+HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scan_history.json")
 
 QSS = """
-QMainWindow { background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #0a0e1a, stop:1 #1a1033); }
-QLabel { color: #e2e8f0; font-family: 'Segoe UI'; }
-QPushButton {
-  background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4);
-  color: white; border: none; border-radius: 12px; padding: 12px 20px;
-  font-size: 13px; font-weight: 600;
-}
+QMainWindow { background: #0a0e1a; }
+QWidget { color: #e2e8f0; font-family: 'Segoe UI'; }
+QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4); color: white; border: none; border-radius: 10px; padding: 10px 18px; font-weight: 600; }
 QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #8b5cf6, stop:1 #22d3ee); }
-QPushButton:disabled { background: #334155; color: #94a3b8; }
-QTextEdit {
-  background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b;
-  border-radius: 12px; padding: 12px; font-family: Consolas; font-size: 11px;
-}
-QProgressBar {
-  background: #1e293b; border: none; border-radius: 6px; height: 8px; text-align: center;
-}
+QPushButton:disabled { background: #1e293b; color: #64748b; }
+QPushButton.nav { background: transparent; border: none; text-align: left; padding: 12px 16px; border-radius: 8px; color: #94a3b8; }
+QPushButton.nav:hover { background: #1e293b; color: #e2e8f0; }
+QPushButton.nav[active="true"] { background: #7c3aed; color: white; }
+QTextEdit { background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; font-family: Consolas; font-size: 11px; }
+QProgressBar { background: #1e293b; border: none; border-radius: 6px; height: 8px; }
 QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4); border-radius: 6px; }
-QFrame#card { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 16px; }
+QFrame#card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; }
+QLabel#title { font-size: 26px; font-weight: 800; color: #c4b5fd; }
+QLabel#muted { color: #64748b; font-size: 11px; }
 """
 
 class ScanWorker(QThread):
-    output = pyqtSignal(str)
-    finished = pyqtSignal()
+    output = pyqtSignal(str); finished = pyqtSignal()
     def __init__(self, args):
         super().__init__(); self.args = args
     def run(self):
         try:
             r = subprocess.run([ENGINE] + self.args, capture_output=True, text=True, timeout=300)
-            self.output.emit(r.stdout)
+            self.output.emit(r.stdout or "")
             if r.stderr: self.output.emit("\n" + r.stderr)
+            self._save(r.stdout)
         except Exception as e:
             self.output.emit(f"Error: {e}")
         self.finished.emit()
+    def _save(self, out):
+        try:
+            data = []
+            if os.path.exists(HISTORY):
+                data = json.load(open(HISTORY))
+            data.append({"time": datetime.datetime.now().isoformat(), "args": self.args, "output": (out or "")[:1500]})
+            json.dump(data[-100:], open(HISTORY, "w"), indent=2)
+        except Exception: pass
 
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("TitanDefender")
-        self.resize(1000, 700)
+        self.resize(1100, 720)
         self.setStyleSheet(QSS)
         self.worker = None
         self._build()
 
     def _build(self):
-        central = QWidget()
-        self.setCentralWidget(central)
-        layout = QVBoxLayout(central)
-        layout.setContentsMargins(32, 28, 32, 20)
-        layout.setSpacing(16)
+        central = QWidget(); self.setCentralWidget(central)
+        root = QHBoxLayout(central); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
-        # header
-        hdr = QHBoxLayout()
-        title = QLabel("🛡️  TitanDefender")
-        title.setStyleSheet("font-size: 30px; font-weight: 800; color: #c4b5fd;")
-        hdr.addWidget(title)
-        sub = QLabel("Modern Antivirus · Glassmorphism")
-        sub.setStyleSheet("color: #64748b; font-size: 12px;")
-        hdr.addWidget(sub)
-        hdr.addStretch()
-        pill = QLabel("● Защищено")
-        pill.setStyleSheet("color: #22c55e; font-weight: 700; background: #0f172a; border-radius: 12px; padding: 6px 14px;")
-        hdr.addWidget(pill)
-        layout.addLayout(hdr)
+        # sidebar
+        side = QWidget(); side.setFixedWidth(220); side.setStyleSheet("background: #080c18;")
+        sl = QVBoxLayout(side); sl.setContentsMargins(12,20,12,20); sl.setSpacing(4)
+        logo = QLabel("🛡️ TitanDefender"); logo.setStyleSheet("font-size: 18px; font-weight: 800; color: #c4b5fd; padding: 8px;")
+        sl.addWidget(logo)
+        sl.addSpacing(12)
+        self.nav_btns = {}
+        for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("quarantine","🔒  Карантин"),("history","📜  История"),("settings","⚙️  Настройки")]:
+            b = QPushButton(txt); b.setProperty("class","nav"); b.clicked.connect(lambda _, k=key: self.switch(k))
+            sl.addWidget(b); self.nav_btns[key] = b
+        sl.addStretch()
+        safe = QLabel("Безопасный режим")
+        safe.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
+        sl.addWidget(safe)
+        root.addWidget(side)
 
-        # safety banner
-        safe = QLabel("Безопасный режим: файлы только читаются, удаление только через карантин с подтверждением")
-        safe.setStyleSheet("color: #22c55e; font-size: 10px;")
-        layout.addWidget(safe)
+        # content stack
+        self.stack = QStackedWidget()
+        root.addWidget(self.stack, 1)
 
-        # cards
+        self.pages = {}
+        self.pages["dashboard"] = self._dashboard_page()
+        self.pages["scan"] = self._scan_page()
+        self.pages["quarantine"] = self._quarantine_page()
+        self.pages["history"] = self._history_page()
+        self.pages["settings"] = self._settings_page()
+        for k, p in self.pages.items():
+            self.stack.addWidget(p)
+        self.switch("dashboard")
+
+    def switch(self, key):
+        for k, b in self.nav_btns.items():
+            b.setProperty("active", "true" if k == key else "false")
+            b.style().unpolish(b); b.style().polish(b)
+        self.stack.setCurrentWidget(self.pages[key])
+
+    def _card(self, layout, title, value):
+        f = QFrame(); f.setObjectName("card")
+        fl = QVBoxLayout(f); fl.setContentsMargins(16,12,16,12)
+        tl = QLabel(title); tl.setStyleSheet("color: #64748b; font-size: 10px;")
+        vl = QLabel(value); vl.setStyleSheet("color: #f1f5f9; font-size: 16px; font-weight: 700;")
+        fl.addWidget(tl); fl.addWidget(vl)
+        layout.addWidget(f)
+
+    def _dashboard_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(16)
+        t = QLabel("Панель управления"); t.setObjectName("title"); l.addWidget(t)
         cards = QHBoxLayout()
-        for t, v in [("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]:
-            frame = QFrame(); frame.setObjectName("card")
-            fl = QVBoxLayout(frame); fl.setContentsMargins(16,12,16,12)
-            tl = QLabel(t); tl.setStyleSheet("color: #64748b; font-size: 10px;")
-            vl = QLabel(v); vl.setStyleSheet("color: #f1f5f9; font-size: 16px; font-weight: 700;")
-            fl.addWidget(tl); fl.addWidget(vl)
-            cards.addWidget(frame)
-        layout.addLayout(cards)
+        for tt, vv in [("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]:
+            self._card(cards, tt, vv)
+        l.addLayout(cards)
+        l.addStretch()
+        return w
 
-        # buttons
+    def _scan_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
+        t = QLabel("Сканирование"); t.setObjectName("title"); l.addWidget(t)
         btns = QHBoxLayout()
-        for txt, cmd in [("⚡ Быстрое сканирование", self.quick_scan), ("📁 Выбрать папку", self.custom_scan),
-                         ("📋 Сигнатуры", self.list_sigs), ("🔒 Карантин", self.quarantine_list)]:
+        for txt, cmd in [("⚡ Быстрое сканирование", self.quick_scan), ("📁 Выбрать папку", self.custom_scan), ("📋 Сигнатуры", self.list_sigs), ("🔒 Карантин", self.quarantine_list)]:
             b = QPushButton(txt); b.clicked.connect(cmd); btns.addWidget(b)
-        layout.addLayout(btns)
-
-        # progress
+        l.addLayout(btns)
         self.progress = QProgressBar(); self.progress.setRange(0,100); self.progress.setValue(0)
-        layout.addWidget(self.progress)
-
-        # log
+        l.addWidget(self.progress)
         self.log = QTextEdit(); self.log.setReadOnly(True)
-        layout.addWidget(self.log, 1)
+        l.addWidget(self.log, 1)
+        return w
 
-        foot = QLabel("TitanDefender v0.4 · Rust engine + PyQt6 GUI")
-        foot.setStyleSheet("color: #475569; font-size: 9px;")
-        layout.addWidget(foot)
+    def _quarantine_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
+        t = QLabel("Карантин"); t.setObjectName("title"); l.addWidget(t)
+        b = QPushButton("Обновить список"); b.clicked.connect(self.quarantine_list); l.addWidget(b)
+        self.qlog = QTextEdit(); self.qlog.setReadOnly(True); l.addWidget(self.qlog, 1)
+        return w
 
-    def run_engine(self, args):
+    def _history_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
+        t = QLabel("История сканирований"); t.setObjectName("title"); l.addWidget(t)
+        b = QPushButton("Загрузить"); b.clicked.connect(self.load_history); l.addWidget(b)
+        self.hlog = QTextEdit(); self.hlog.setReadOnly(True); l.addWidget(self.hlog, 1)
+        return w
+
+    def _settings_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
+        t = QLabel("Настройки"); t.setObjectName("title"); l.addWidget(t)
+        l.addWidget(QLabel("Безопасный режим: включён (файлы только читаются)"))
+        l.addWidget(QLabel("Real-time защита: включена"))
+        l.addStretch()
+        return w
+
+    def run_engine(self, args, target=None):
         if self.worker and self.worker.isRunning(): return
-        self.log.clear()
+        target = target or self.log
+        target.clear()
         self.progress.setValue(0)
         self.worker = ScanWorker(args)
-        self.worker.output.connect(lambda t: self.log.insertPlainText(t))
+        self.worker.output.connect(lambda t: target.insertPlainText(t))
         self.worker.finished.connect(lambda: self.progress.setValue(100))
         self.worker.start()
+        def tick():
+            if self.worker.isRunning() and self.progress.value() < 95:
+                self.progress.setValue(self.progress.value() + 2)
+                from PyQt6.QtCore import QTimer
+                QTimer.singleShot(250, tick)
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(250, tick)
 
     def quick_scan(self): self.run_engine(["scan","C:\\","--quick","--json"])
     def custom_scan(self):
         d = QFileDialog.getExistingDirectory(self, "Выбрать папку")
         if d: self.run_engine(["scan", d])
     def list_sigs(self): self.run_engine(["list-sigs"])
-    def quarantine_list(self): self.run_engine(["quarantines"])
+    def quarantine_list(self):
+        self.switch("quarantine")
+        self.run_engine(["quarantines"], target=self.qlog)
+    def load_history(self):
+        try:
+            data = json.load(open(HISTORY))
+            self.hlog.clear()
+            for e in reversed(data):
+                self.hlog.append(f"[{e['time']}] {e['args']}\n{e['output'][:300]}\n{'-'*40}")
+        except Exception as ex:
+            self.hlog.setPlainText(f"Нет истории: {ex}")
 
 def main():
     app = QApplication(sys.argv)
