@@ -271,6 +271,7 @@ class App(QMainWindow):
         self.worker = ScanWorker(args)
         self.worker.output.connect(lambda t: target.insertPlainText(t))
         self.worker.finished.connect(lambda: self.progress.setValue(100))
+        self.worker.finished.connect(self._on_scan_finished)
         self.worker.start()
         def tick():
             if self.worker.isRunning() and self.progress.value() < 95:
@@ -279,6 +280,13 @@ class App(QMainWindow):
                 QTimer.singleShot(250, tick)
         from PyQt6.QtCore import QTimer
         QTimer.singleShot(250, tick)
+
+    def _on_scan_finished(self):
+        try:
+            txt = self.log.toPlainText() if hasattr(self, "log") else ""
+            if "THREAT" in txt.upper() or "?????" in txt.lower():
+                QMessageBox.warning(self, "?????? ??????????", "TitanDefender ????????? ?????????????? ?????. ????????? ???.")
+        except Exception: pass
 
     def quick_scan(self): self.run_engine(["scan","C:\\","--quick","--json"])
     def custom_scan(self):
