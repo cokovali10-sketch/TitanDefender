@@ -1,11 +1,13 @@
 import subprocess, os, threading, sys, json, datetime
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget,
+    QCheckBox, QComboBox, QSpinBox, QMessageBox, QSizePolicy)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QColor
 
 ENGINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "titan.exe")
 HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scan_history.json")
+SETTINGS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "settings.json")
 
 QSS = """
 QMainWindow { background: #0a0e1a; }
@@ -16,12 +18,17 @@ QPushButton:disabled { background: #1e293b; color: #64748b; }
 QPushButton.nav { background: transparent; border: none; text-align: left; padding: 12px 16px; border-radius: 8px; color: #94a3b8; }
 QPushButton.nav:hover { background: #1e293b; color: #e2e8f0; }
 QPushButton.nav[active="true"] { background: #7c3aed; color: white; }
+QPushButton.secondary { background: #1e293b; color: #e2e8f0; }
+QPushButton.secondary:hover { background: #334155; }
 QTextEdit { background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; font-family: Consolas; font-size: 11px; }
 QProgressBar { background: #1e293b; border: none; border-radius: 6px; height: 8px; }
 QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4); border-radius: 6px; }
 QFrame#card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; }
 QLabel#title { font-size: 26px; font-weight: 800; color: #c4b5fd; }
 QLabel#muted { color: #64748b; font-size: 11px; }
+QCheckBox { color: #e2e8f0; spacing: 8px; }
+QComboBox { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; }
+QSpinBox { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px; }
 """
 
 class ScanWorker(QThread):
@@ -50,16 +57,29 @@ class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("TitanDefender")
-        self.resize(1100, 720)
+        self.resize(1180, 760)
         self.setStyleSheet(QSS)
         self.worker = None
+        self.settings = self._load_settings()
         self._build()
+        self._timer = QTimer(self); self._timer.timeout.connect(self._tick_status); self._timer.start(5000)
+
+    def _load_settings(self):
+        try:
+            return json.load(open(SETTINGS, encoding="utf-8"))
+        except Exception:
+            return {"realtime": True, "autoupdate": True, "safemode": True, "schedule": "off", "interval": 60}
+
+    def _save_settings(self):
+        try:
+            json.dump(self.settings, open(SETTINGS, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+        except Exception: pass
 
     def _build(self):
         central = QWidget(); self.setCentralWidget(central)
         root = QHBoxLayout(central); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
-        side = QWidget(); side.setFixedWidth(220); side.setStyleSheet("background: #080c18;")
+        side = QWidget(); side.setFixedWidth(230); side.setStyleSheet("background: #080c18;")
         sl = QVBoxLayout(side); sl.setContentsMargins(12,20,12,20); sl.setSpacing(4)
         logo = QLabel("🛡️  TitanDefender"); logo.setStyleSheet("font-size: 18px; font-weight: 800; color: #c4b5fd; padding: 8px;")
         sl.addWidget(logo)
@@ -69,9 +89,9 @@ class App(QMainWindow):
             b = QPushButton(txt); b.setProperty("class","nav"); b.clicked.connect(lambda _, k=key: self.switch(k))
             sl.addWidget(b); self.nav_btns[key] = b
         sl.addStretch()
-        safe = QLabel("Безопасный режим")
-        safe.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
-        sl.addWidget(safe)
+        self.status_pill = QLabel("● Защищено")
+        self.status_pill.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
+        sl.addWidget(self.status_pill)
         root.addWidget(side)
 
         self.stack = QStackedWidget()
@@ -113,10 +133,22 @@ class App(QMainWindow):
         qa = QHBoxLayout()
         b1 = QPushButton("⚡ Оптимизировать ПК"); b1.clicked.connect(lambda: (self.switch("optimize"), self.optimize()))
         b2 = QPushButton("🔬 Глубокий скан"); b2.clicked.connect(lambda: self.switch("deep"))
-        qa.addWidget(b1); qa.addWidget(b2); qa.addStretch()
+        b3 = QPushButton("📤 Экспорт отчёта"); b3.clicked.connect(self.export_report)
+        b3.setProperty("class","secondary")
+        qa.addWidget(b1); qa.addWidget(b2); qa.addWidget(b3); qa.addStretch()
         l.addLayout(qa)
         l.addStretch()
         return w
+
+    def export_report(self):
+        try:
+            data = json.load(open(HISTORY, encoding="utf-8")) if os.path.exists(HISTORY) else []
+            path, _ = QFileDialog.getSaveFileName(self, "Сохранить отчёт", "report.json", "JSON (*.json)")
+            if path:
+                json.dump(data, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+                QMessageBox.information(self, "Готово", f"Отчёт сохранён: {path}")
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", str(e))
 
     def _scan_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
@@ -173,12 +205,29 @@ class App(QMainWindow):
         return w
 
     def _settings_page(self):
-        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
         t = QLabel("Настройки"); t.setObjectName("title"); l.addWidget(t)
-        l.addWidget(QLabel("Безопасный режим: включён (файлы только читаются)"))
-        l.addWidget(QLabel("Real-time защита: включена"))
+        self.cb_realtime = QCheckBox("Real-time защита"); self.cb_realtime.setChecked(self.settings.get("realtime", True))
+        self.cb_realtime.stateChanged.connect(lambda s: (self.settings.update({"realtime": bool(s)}), self._save_settings()))
+        l.addWidget(self.cb_realtime)
+        self.cb_autoupdate = QCheckBox("Автообновление сигнатур"); self.cb_autoupdate.setChecked(self.settings.get("autoupdate", True))
+        self.cb_autoupdate.stateChanged.connect(lambda s: (self.settings.update({"autoupdate": bool(s)}), self._save_settings()))
+        l.addWidget(self.cb_autoupdate)
+        self.cb_safe = QCheckBox("Безопасный режим (только чтение)"); self.cb_safe.setChecked(self.settings.get("safemode", True))
+        self.cb_safe.stateChanged.connect(lambda s: (self.settings.update({"safemode": bool(s)}), self._save_settings()))
+        l.addWidget(self.cb_safe)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Расписание сканирования:"))
+        self.combo_sched = QComboBox(); self.combo_sched.addItems(["off","daily","weekly"])
+        self.combo_sched.setCurrentText(self.settings.get("schedule","off"))
+        self.combo_sched.currentTextChanged.connect(lambda v: (self.settings.update({"schedule": v}), self._save_settings()))
+        row.addWidget(self.combo_sched)
+        l.addLayout(row)
         l.addStretch()
         return w
+
+    def _tick_status(self):
+        self.status_pill.setText("● Защищено" if self.settings.get("realtime", True) else "● Real-time выкл")
 
     def run_engine(self, args, target=None):
         if self.worker and self.worker.isRunning(): return
