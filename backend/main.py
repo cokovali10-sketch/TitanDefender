@@ -47,6 +47,10 @@ def stats():
     total_threats = sum(r.threats for r in reports)
     return {"total_reports": len(reports), "total_threats": total_threats, "files_scanned": sum(r.files_scanned for r in reports)}
 
+@app.get("/history")
+def history(limit: int = 50):
+    return {"items": reports[-limit:], "total": len(reports)}
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
     return """<html><head><title>TitanDefender Cloud</title><style>
