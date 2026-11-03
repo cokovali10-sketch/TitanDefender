@@ -67,7 +67,7 @@ class App(QMainWindow):
         sl.addWidget(logo)
         sl.addSpacing(12)
         self.nav_btns = {}
-        for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("quarantine","🔒  Карантин"),("history","📜  История"),("settings","⚙️  Настройки")]:
+        for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("deep","🔬  Глубокий скан"),("optimize","⚡  Оптимизация"),("quarantine","🔒  Карантин"),("history","📜  История"),("settings","⚙️  Настройки")]:
             b = QPushButton(txt); b.setProperty("class","nav"); b.clicked.connect(lambda _, k=key: self.switch(k))
             sl.addWidget(b); self.nav_btns[key] = b
         sl.addStretch()
