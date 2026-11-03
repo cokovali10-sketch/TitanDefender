@@ -1,10 +1,9 @@
 import subprocess, os, threading, sys, json, datetime
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget, QLineEdit,
-    QCheckBox, QComboBox, QSpinBox, QMessageBox, QSizePolicy)
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget,
+    QCheckBox, QComboBox, QMessageBox, QSystemTrayIcon, QMenu)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QColor, QIcon
-from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 
 ENGINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "titan.exe")
 HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scan_history.json")
@@ -20,16 +19,12 @@ QPushButton.nav { background: transparent; border: none; text-align: left; paddi
 QPushButton.nav:hover { background: #1e293b; color: #e2e8f0; }
 QPushButton.nav[active="true"] { background: #7c3aed; color: white; }
 QPushButton.secondary { background: #1e293b; color: #e2e8f0; }
-QPushButton.secondary:hover { background: #334155; }
 QTextEdit { background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; font-family: Consolas; font-size: 11px; }
 QProgressBar { background: #1e293b; border: none; border-radius: 6px; height: 8px; }
 QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4); border-radius: 6px; }
 QFrame#card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; }
 QLabel#title { font-size: 26px; font-weight: 800; color: #c4b5fd; }
-QLabel#muted { color: #64748b; font-size: 11px; }
-QCheckBox { color: #e2e8f0; spacing: 8px; }
 QComboBox { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 12px; }
-QSpinBox { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px; }
 """
 
 class ScanWorker(QThread):
@@ -62,44 +57,28 @@ class App(QMainWindow):
         self.setStyleSheet(QSS)
         self.worker = None
         self.settings = self._load_settings()
+        self._light = False
         self._build()
         self._setup_tray()
         self._timer = QTimer(self); self._timer.timeout.connect(self._tick_status); self._timer.start(5000)
-        # auto-scan on startup if scheduled
         try:
             if self.settings.get("schedule") == "daily":
                 last = None
                 if os.path.exists(HISTORY):
                     data = json.load(open(HISTORY, encoding="utf-8"))
                     if data: last = data[-1]["time"]
-                from datetime import datetime, timedelta
-                if last is None or datetime.fromisoformat(last) < datetime.now() - timedelta(hours=24):
+                from datetime import timedelta
+                if last is None or datetime.datetime.fromisoformat(last) < datetime.datetime.now() - timedelta(hours=24):
                     QTimer.singleShot(3000, self.quick_scan)
         except Exception: pass
 
     def _load_settings(self):
-        try:
-            return json.load(open(SETTINGS, encoding="utf-8"))
-        except Exception:
-            return {"realtime": True, "autoupdate": True, "safemode": True, "schedule": "off", "interval": 60}
+        try: return json.load(open(SETTINGS, encoding="utf-8"))
+        except Exception: return {"realtime": True, "autoupdate": True, "safemode": True, "schedule": "off", "interval": 60}
 
     def _save_settings(self):
-        try:
-            json.dump(self.settings, open(SETTINGS, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+        try: json.dump(self.settings, open(SETTINGS, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
         except Exception: pass
-
-    def _setup_tray(self):
-        self.tray = QSystemTrayIcon(self)
-        self.tray.setToolTip("TitanDefender")
-        menu = QMenu()
-        a1 = menu.addAction("???????")
-        a1.triggered.connect(self.showNormal)
-        a2 = menu.addAction("??????? ????")
-        a2.triggered.connect(self.quick_scan)
-        a3 = menu.addAction("?????")
-        a3.triggered.connect(self.close)
-        self.tray.setContextMenu(menu)
-        self.tray.show()
 
     def _build(self):
         central = QWidget(); self.setCentralWidget(central)
@@ -111,29 +90,19 @@ class App(QMainWindow):
         sl.addWidget(logo)
         sl.addSpacing(12)
         self.nav_btns = {}
-        for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("deep","🔬  Глубокий скан"),("optimize","⚡  Оптимизация"),("quarantine","🔒  Карантин"),("history","📜  История"),("settings","⚙️  Настройки")]:
+        for key, txt in [("dashboard","📊  Панель"),("scan","🔍  Сканирование"),("deep","🔬  Глубокий скан"),("optimize","⚡  Оптимизация"),("quarantine","🔒  Карантин"),("whitelist","✅  Исключения"),("history","📜  История"),("settings","⚙️  Настройки")]:
             b = QPushButton(txt); b.setProperty("class","nav"); b.clicked.connect(lambda _, k=key: self.switch(k))
             sl.addWidget(b); self.nav_btns[key] = b
-        theme_btn = QPushButton("??????? ????")
-        theme_btn.clicked.connect(self.toggle_theme)
-        sl.addWidget(theme_btn)
-        about_btn = QPushButton("? ?????????")
-        about_btn.clicked.connect(self.show_about)
-        sl.addWidget(about_btn)
+        sl.addSpacing(8)
+        theme_btn = QPushButton("Сменить тему"); theme_btn.clicked.connect(self.toggle_theme); sl.addWidget(theme_btn)
+        about_btn = QPushButton("О программе"); about_btn.clicked.connect(self.show_about); sl.addWidget(about_btn)
         sl.addStretch()
-        self.status_pill = QLabel("● Защищено")
-        self.status_pill.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
+        self.status_pill = QLabel("● Защищено"); self.status_pill.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
         sl.addWidget(self.status_pill)
         root.addWidget(side)
 
         self.stack = QStackedWidget()
         root.addWidget(self.stack, 1)
-
-        # status bar
-        self.statusbar = QLabel("TitanDefender v0.5  |  Engine: ready  |  ????????: 100")
-        self.statusbar.setStyleSheet("background: #080c18; color: #64748b; font-size: 10px; padding: 4px 12px;")
-        self.statusbar.setFixedHeight(22)
-        root.addWidget(self.statusbar)
 
         self.pages = {}
         self.pages["dashboard"] = self._dashboard_page()
@@ -147,6 +116,20 @@ class App(QMainWindow):
         for k, p in self.pages.items():
             self.stack.addWidget(p)
         self.switch("dashboard")
+
+        self.statusbar = QLabel("TitanDefender v0.6  |  Engine: ready  |  Сигнатур: 100")
+        self.statusbar.setStyleSheet("background: #080c18; color: #64748b; font-size: 10px; padding: 4px 12px;")
+        self.statusbar.setFixedHeight(22)
+        root.addWidget(self.statusbar)
+
+    def _setup_tray(self):
+        self.tray = QSystemTrayIcon(self)
+        self.tray.setToolTip("TitanDefender")
+        menu = QMenu()
+        a1 = menu.addAction("Открыть"); a1.triggered.connect(self.showNormal)
+        a2 = menu.addAction("Быстрый скан"); a2.triggered.connect(self.quick_scan)
+        a3 = menu.addAction("Выход"); a3.triggered.connect(self.close)
+        self.tray.setContextMenu(menu); self.tray.show()
 
     def switch(self, key):
         for k, b in self.nav_btns.items():
@@ -166,8 +149,7 @@ class App(QMainWindow):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(16)
         t = QLabel("Панель управления"); t.setObjectName("title"); l.addWidget(t)
         cards = QHBoxLayout()
-        last = "—"
-        threats = 0
+        last = "—"; threats = 0
         try:
             data = json.load(open(HISTORY, encoding="utf-8"))
             if data:
@@ -176,18 +158,16 @@ class App(QMainWindow):
         except Exception: pass
         try:
             import psutil
-            cpu = f"{psutil.cpu_percent()}%"
-            mem = f"{psutil.virtual_memory().percent}%"
+            cpu = f"{psutil.cpu_percent()}%"; mem = f"{psutil.virtual_memory().percent}%"
         except Exception:
             cpu = "n/a"; mem = "n/a"
-        for tt, vv in [("????????? ????????????", last),("????? ???????", str(threats)),("CPU", cpu),("??????", mem)]:
+        for tt, vv in [("Последнее сканирование", last),("Угроз найдено", str(threats)),("CPU", cpu),("Память", mem)]:
             self._card(cards, tt, vv)
         l.addLayout(cards)
         qa = QHBoxLayout()
         b1 = QPushButton("⚡ Оптимизировать ПК"); b1.clicked.connect(lambda: (self.switch("optimize"), self.optimize()))
         b2 = QPushButton("🔬 Глубокий скан"); b2.clicked.connect(lambda: self.switch("deep"))
-        b3 = QPushButton("📤 Экспорт отчёта"); b3.clicked.connect(self.export_report)
-        b3.setProperty("class","secondary")
+        b3 = QPushButton("📤 Экспорт отчёта"); b3.clicked.connect(self.export_report); b3.setProperty("class","secondary")
         qa.addWidget(b1); qa.addWidget(b2); qa.addWidget(b3); qa.addStretch()
         l.addLayout(qa)
         l.addStretch()
@@ -207,7 +187,7 @@ class App(QMainWindow):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
         t = QLabel("Сканирование"); t.setObjectName("title"); l.addWidget(t)
         btns = QHBoxLayout()
-        for txt, cmd in [("⚡ Быстрое сканирование", self.quick_scan), ("📁 Выбрать папку", self.custom_scan), ("📋 Сигнатуры", self.list_sigs), ("🔒 Карантин", self.quarantine_list)]:
+        for txt, cmd in [("⚡ Быстрое сканирование", self.quick_scan), ("📁 Выбрать папку", self.custom_scan), ("📋 Сигнатуры", self.list_sigs), ("🔬 YARA скан", self.yara_scan), ("🔒 Карантин", self.quarantine_list)]:
             b = QPushButton(txt); b.clicked.connect(cmd); btns.addWidget(b)
         l.addLayout(btns)
         self.progress = QProgressBar(); self.progress.setRange(0,100); self.progress.setValue(0)
@@ -247,16 +227,24 @@ class App(QMainWindow):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
         t = QLabel("Карантин"); t.setObjectName("title"); l.addWidget(t)
         b = QPushButton("Обновить список"); b.clicked.connect(self.quarantine_list); l.addWidget(b)
+        row = QHBoxLayout()
+        self.restore_input = QLineEdit() if False else __import__("PyQt6.QtWidgets", fromlist=["QLineEdit"]).QLineEdit()
+        self.restore_input.setPlaceholderText("Имя файла для восстановления/удаления")
+        row.addWidget(self.restore_input)
+        br = QPushButton("Восстановить"); br.clicked.connect(self.restore_quarantine); row.addWidget(br)
+        bd = QPushButton("Удалить"); bd.clicked.connect(self.delete_quarantine); row.addWidget(bd)
+        l.addLayout(row)
         self.qlog = QTextEdit(); self.qlog.setReadOnly(True); l.addWidget(self.qlog, 1)
         return w
 
     def _whitelist_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
-        t = QLabel("?????????? (whitelist)"); t.setObjectName("title"); l.addWidget(t)
+        t = QLabel("Исключения (whitelist)"); t.setObjectName("title"); l.addWidget(t)
         row = QHBoxLayout()
-        self.wl_input = QLineEdit(); self.wl_input.setPlaceholderText("??? SHA256 ??? ?????????? ? ??????????")
+        self.wl_input = __import__("PyQt6.QtWidgets", fromlist=["QLineEdit"]).QLineEdit()
+        self.wl_input.setPlaceholderText("Хеш SHA256")
         row.addWidget(self.wl_input)
-        b = QPushButton("????????"); b.clicked.connect(self.add_whitelist); row.addWidget(b)
+        b = QPushButton("Добавить"); b.clicked.connect(self.add_whitelist); row.addWidget(b)
         l.addLayout(row)
         self.wl_log = QTextEdit(); self.wl_log.setReadOnly(True); l.addWidget(self.wl_log, 1)
         return w
@@ -270,6 +258,7 @@ class App(QMainWindow):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
         t = QLabel("История сканирований"); t.setObjectName("title"); l.addWidget(t)
         b = QPushButton("Загрузить"); b.clicked.connect(self.load_history); l.addWidget(b)
+        b2 = QPushButton("Очистить историю"); b2.clicked.connect(self.clear_history); l.addWidget(b2)
         self.hlog = QTextEdit(); self.hlog.setReadOnly(True); l.addWidget(self.hlog, 1)
         return w
 
@@ -319,12 +308,9 @@ class App(QMainWindow):
     def _on_scan_finished(self):
         try:
             txt = self.log.toPlainText() if hasattr(self, "log") else ""
-            if "THREAT" in txt.upper() or "?????" in txt.lower():
-                QMessageBox.warning(self, "?????? ??????????", "TitanDefender ????????? ?????????????? ?????. ????????? ???.")
+            if "THREAT" in txt.upper():
+                QMessageBox.warning(self, "Угроза обнаружена", "TitanDefender обнаружил подозрительные файлы. Проверьте лог.")
         except Exception: pass
-
-    def show_about(self):
-        QMessageBox.information(self, "? ?????????", "TitanDefender v0.6\nModern Antivirus\n\nEngine: Rust (SHA-256, YARA, quarantine)\nGUI: PyQt6\nBackend: FastAPI\n\n? 2026 cokovali10-sketch\nMIT License")
 
     def quick_scan(self): self.run_engine(["scan","C:\\","--quick","--json"])
     def custom_scan(self):
@@ -332,7 +318,7 @@ class App(QMainWindow):
         if d: self.run_engine(["scan", d])
     def list_sigs(self): self.run_engine(["list-sigs"])
     def yara_scan(self):
-        d = QFileDialog.getExistingDirectory(self, "????? ??? YARA-?????")
+        d = QFileDialog.getExistingDirectory(self, "Папка для YARA-скана")
         if d: self.run_engine(["yara-scan", d])
     def quarantine_list(self):
         self.switch("quarantine")
@@ -343,6 +329,20 @@ class App(QMainWindow):
     def delete_quarantine(self):
         name = self.restore_input.text().strip()
         if name: self.run_engine(["quarantine-delete", name], target=self.qlog)
+    def add_whitelist(self):
+        h = self.wl_input.text().strip()
+        if h:
+            self.run_engine(["whitelist-add", h], target=self.wl_log)
+            self.wl_input.clear()
+    def deep_scan(self):
+        self.switch("deep")
+        self.run_engine(["deep-scan", self.deep_path.text()], target=self.dlog)
+    def pick_deep(self):
+        d = QFileDialog.getExistingDirectory(self, "Папка для глубокого скана")
+        if d: self.deep_path.setText(d)
+    def optimize(self):
+        self.switch("optimize")
+        self.run_engine(["optimize"], target=self.olog)
     def load_history(self):
         try:
             data = json.load(open(HISTORY, encoding="utf-8"))
@@ -351,15 +351,30 @@ class App(QMainWindow):
                 self.hlog.append(f"[{e['time']}] {e['args']}\n{e['output'][:300]}\n{'-'*40}")
         except Exception as ex:
             self.hlog.setPlainText(f"Нет истории: {ex}")
-
+    def clear_history(self):
+        try:
+            if os.path.exists(HISTORY): os.remove(HISTORY)
+            self.hlog.clear()
+            self.hlog.setPlainText("История очищена.")
+        except Exception as e:
+            self.hlog.setPlainText(f"Ошибка: {e}")
+    def export_report(self):
+        try:
+            data = json.load(open(HISTORY, encoding="utf-8")) if os.path.exists(HISTORY) else []
+            path, _ = QFileDialog.getSaveFileName(self, "Сохранить отчёт", "report.json", "JSON (*.json)")
+            if path:
+                json.dump(data, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+                QMessageBox.information(self, "Готово", f"Отчёт сохранён: {path}")
+        except Exception as e:
+            QMessageBox.warning(self, "Ошибка", str(e))
     def toggle_theme(self):
         if getattr(self, "_light", False):
-            self.setStyleSheet(QSS)
-            self._light = False
+            self.setStyleSheet(QSS); self._light = False
         else:
             light = QSS.replace("#0a0e1a","#f8fafc").replace("#080c18","#e2e8f0").replace("#0f172a","#ffffff").replace("#111827","#ffffff").replace("#e2e8f0","#0f172a").replace("#64748b","#475569").replace("#1e293b","#cbd5e1").replace("#334155","#cbd5e1")
-            self.setStyleSheet(light)
-            self._light = True
+            self.setStyleSheet(light); self._light = True
+    def show_about(self):
+        QMessageBox.information(self, "О программе", "TitanDefender v0.6\nModern Antivirus\n\nEngine: Rust (SHA-256, YARA, quarantine)\nGUI: PyQt6\nBackend: FastAPI\n\n© 2026 cokovali10-sketch\nMIT License")
 
 def main():
     app = QApplication(sys.argv)
