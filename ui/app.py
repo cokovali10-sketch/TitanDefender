@@ -65,6 +65,17 @@ class App(QMainWindow):
         self._build()
         self._setup_tray()
         self._timer = QTimer(self); self._timer.timeout.connect(self._tick_status); self._timer.start(5000)
+        # auto-scan on startup if scheduled
+        try:
+            if self.settings.get("schedule") == "daily":
+                last = None
+                if os.path.exists(HISTORY):
+                    data = json.load(open(HISTORY, encoding="utf-8"))
+                    if data: last = data[-1]["time"]
+                from datetime import datetime, timedelta
+                if last is None or datetime.fromisoformat(last) < datetime.now() - timedelta(hours=24):
+                    QTimer.singleShot(3000, self.quick_scan)
+        except Exception: pass
 
     def _load_settings(self):
         try:
