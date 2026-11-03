@@ -18,10 +18,14 @@ enum Commands {
     Scan { path: String, #[arg(short, long)] quick: bool, #[arg(long)] json: bool },
     Quarantine { path: String },
     Quarantines,
+    QuarantineRestore { name: String },
+    QuarantineDelete { name: String },
+    WhitelistAdd { hash: String },
     ListSigs,
     Watch { path: String },
     DeepScan { path: String },
     Optimize,
+    YaraScan { path: String },
     Menu,
 }
 
@@ -141,6 +145,7 @@ fn interactive_menu() {
                 println!("Suggestions: clear temp, disable startup apps, update drivers, enable Game Mode.");
             }
             "7" => { println!("Run from CLI: titan watch <path>"); }
+            "8" => { print!("Path: "); std::io::stdout().flush().unwrap(); let mut pth = String::new(); std::io::stdin().read_line(&mut pth).unwrap(); let h = pth.trim(); println!("Run: titan yarasecan {}", h); }
             "0" => break,
             _ => println!("Invalid choice"),
         }
@@ -251,6 +256,71 @@ fn main() {
             println!("  - Remove large unused files in Downloads");
             println!("  - Enable Game Mode for gaming sessions");
             println!("  - Keep drivers and Windows updated");
+        }
+        Commands::QuarantineRestore { name } => {
+            let qdir = dirs::home_dir().unwrap_or_default().join(".titan").join("quarantine");
+            let src = qdir.join(&name);
+            if !src.exists() { println!("Not found in quarantine: {}", name); }
+            else {
+                let dest = std::path::PathBuf::from(&name);
+                match fs::rename(&src, &dest) {
+                    Ok(_) => println!("Restored: {}", name),
+                    Err(e) => eprintln!("Error: {}", e),
+                }
+            }
+        }
+        Commands::QuarantineDelete { name } => {
+            let qdir = dirs::home_dir().unwrap_or_default().join(".titan").join("quarantine");
+            let src = qdir.join(&name);
+            if src.exists() {
+                if fs::remove_file(&src).is_ok() { println!("Deleted: {}", name); }
+                else { eprintln!("Failed to delete: {}", name); }
+            } else { println!("Not found: {}", name); }
+        }
+        Commands::WhitelistAdd { hash } => {
+            println!("Added to whitelist: {}", hash);
+            // store in a simple file
+            let wl = dirs::home_dir().unwrap_or_default().join(".titan").join("whitelist.txt");
+            fs::create_dir_all(wl.parent().unwrap()).ok();
+            use std::io::Write;
+            if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&wl) {
+                writeln!(f, "{}", hash).ok();
+            }
+        }
+        Commands::YaraScan { path } => {
+            // Simple YARA-like: read all .yara files, extract quoted strings, check file content
+            let mut rules: Vec<String> = Vec::new();
+            for entry in WalkDir::new("signatures").into_iter().filter_map(|e| e.ok()) {
+                if entry.path().extension().map(|x| x=="yara").unwrap_or(false) {
+                    if let Ok(content) = fs::read_to_string(entry.path()) {
+                        // extract quoted strings
+                        for line in content.lines() {
+                            let line = line.trim();
+                            if line.contains('"') {
+                                let parts: Vec<&str> = line.split('"').collect();
+                                if parts.len() >= 2 { rules.push(parts[1].to_string()); }
+                            }
+                        }
+                    }
+                }
+            }
+            println!("Loaded {} YARA string patterns", rules.len());
+            let mut hits = 0usize;
+            for entry in WalkDir::new(&path).into_iter().filter_map(|e| e.ok()) {
+                if !entry.file_type().is_file() { continue; }
+                if let Ok(content) = fs::read_to_string(entry.path()) {
+                    let cl = content.to_lowercase();
+                    let mut matched = Vec::new();
+                    for r in &rules {
+                        if cl.contains(&r.to_lowercase()) { matched.push(r.clone()); }
+                    }
+                    if !matched.is_empty() {
+                        hits += 1;
+                        println!("[YARA] {} -> {}", matched.join(", "), entry.path().display());
+                    }
+                }
+            }
+            println!("YARA scan complete: {} files matched", hits);
         }
         Commands::Menu => { interactive_menu(); }
     }
