@@ -106,6 +106,9 @@ class App(QMainWindow):
         theme_btn = QPushButton("??????? ????")
         theme_btn.clicked.connect(self.toggle_theme)
         sl.addWidget(theme_btn)
+        about_btn = QPushButton("? ?????????")
+        about_btn.clicked.connect(self.show_about)
+        sl.addWidget(about_btn)
         sl.addStretch()
         self.status_pill = QLabel("● Защищено")
         self.status_pill.setStyleSheet("color: #22c55e; font-size: 10px; padding: 8px;")
@@ -308,6 +311,9 @@ class App(QMainWindow):
             if "THREAT" in txt.upper() or "?????" in txt.lower():
                 QMessageBox.warning(self, "?????? ??????????", "TitanDefender ????????? ?????????????? ?????. ????????? ???.")
         except Exception: pass
+
+    def show_about(self):
+        QMessageBox.information(self, "? ?????????", "TitanDefender v0.6\nModern Antivirus\n\nEngine: Rust (SHA-256, YARA, quarantine)\nGUI: PyQt6\nBackend: FastAPI\n\n? 2026 cokovali10-sketch\nMIT License")
 
     def quick_scan(self): self.run_engine(["scan","C:\\","--quick","--json"])
     def custom_scan(self):
