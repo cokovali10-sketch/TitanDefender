@@ -341,3 +341,24 @@ fn main() {
         Commands::Menu => { interactive_menu(); }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn sha256_empty() {
+        let h = sha256_file(std::path::Path::new("/dev/null"));
+        // just ensure function compiles and runs
+        let _ = h;
+    }
+    #[test]
+    fn load_sigs_not_empty() {
+        let db = load_sigs();
+        assert!(!db.signatures.is_empty());
+    }
+    #[test]
+    fn load_whitelist_ok() {
+        let _ = load_whitelist();
+    }
+}

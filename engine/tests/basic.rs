@@ -1,0 +1,1 @@
+﻿#[test] fn sha256_empty() { use sha2::{Sha256, Digest}; let mut h = Sha256::new(); h.update(b""); assert_eq!(format!("{:x}", h.finalize()), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"); }
