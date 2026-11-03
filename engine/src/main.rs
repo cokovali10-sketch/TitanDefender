@@ -201,14 +201,56 @@ fn main() {
             println!("Deep scan complete: {} files, {} threats", total, threats);
         }
         Commands::Optimize => {
-            println!("=== TitanDefender Optimizer ===");
+            println!("=== TitanDefender PC Optimizer ===");
+            // 1. temp files
             let temp = std::env::temp_dir();
             let mut ts = 0u64; let mut tc = 0usize;
-            for e in WalkDir::new(&temp).max_depth(3).into_iter().filter_map(|e| e.ok()) {
+            for e in WalkDir::new(&temp).max_depth(4).into_iter().filter_map(|e| e.ok()) {
                 if e.file_type().is_file() { if let Ok(m) = e.metadata() { ts += m.len(); tc += 1; } }
             }
-            println!("Temp files: {} ({} MB) - cleanable", tc, ts/1024/1024);
-            println!("Suggestions: clear temp, disable startup apps, update drivers, enable Game Mode.");
+            println!("[1] Temp files: {} ({} MB) - cleanable", tc, ts/1024/1024);
+            // 2. disk space
+            if let Ok(out) = std::process::Command::new("wmic").args(["logicaldisk","get","size,freespace,caption"]).output() {
+                println!("[2] Disk info:");
+                println!("{}", String::from_utf8_lossy(&out.stdout));
+            }
+            // 3. startup programs (registry read)
+            if let Ok(out) = std::process::Command::new("reg").args(["query","HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"]).output() {
+                println!("[3] Startup (HKCU Run):");
+                println!("{}", String::from_utf8_lossy(&out.stdout));
+            }
+            // 4. large files in Downloads
+            let home = dirs::home_dir().unwrap_or_default();
+            let downloads = home.join("Downloads");
+            let mut large = Vec::new();
+            for e in WalkDir::new(&downloads).max_depth(2).into_iter().filter_map(|e| e.ok()) {
+                if e.file_type().is_file() {
+                    if let Ok(m) = e.metadata() {
+                        if m.len() > 100*1024*1024 { large.push((e.path().display().to_string(), m.len())); }
+                    }
+                }
+            }
+            println!("[4] Large files in Downloads (>100MB): {}", large.len());
+            for (p,sz) in &large { println!("    {} ({} MB)", p, sz/1024/1024); }
+            // 5. browser caches
+            let cache_dirs = [
+                home.join("AppData").join("Local").join("Google").join("Chrome").join("User Data").join("Default").join("Cache"),
+                home.join("AppData").join("Local").join("Microsoft").join("Edge").join("User Data").join("Default").join("Cache"),
+            ];
+            let mut cache_size = 0u64;
+            for cd in &cache_dirs {
+                for e in WalkDir::new(cd).into_iter().filter_map(|e| e.ok()) {
+                    if e.file_type().is_file() { if let Ok(m)=e.metadata() { cache_size += m.len(); } }
+                }
+            }
+            println!("[5] Browser caches: {} MB - cleanable", cache_size/1024/1024);
+            println!();
+            println!("Recommendations:");
+            println!("  - Clear temp files and browser caches");
+            println!("  - Review startup programs (disable unused)");
+            println!("  - Remove large unused files in Downloads");
+            println!("  - Enable Game Mode for gaming sessions");
+            println!("  - Keep drivers and Windows updated");
         }
         Commands::Menu => { interactive_menu(); }
     }
