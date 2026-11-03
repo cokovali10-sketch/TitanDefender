@@ -83,6 +83,8 @@ class App(QMainWindow):
         self.pages = {}
         self.pages["dashboard"] = self._dashboard_page()
         self.pages["scan"] = self._scan_page()
+        self.pages["deep"] = self._deep_page()
+        self.pages["optimize"] = self._optimize_page()
         self.pages["quarantine"] = self._quarantine_page()
         self.pages["history"] = self._history_page()
         self.pages["settings"] = self._settings_page()
@@ -126,6 +128,33 @@ class App(QMainWindow):
         self.log = QTextEdit(); self.log.setReadOnly(True)
         l.addWidget(self.log, 1)
         return w
+
+    def _deep_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
+        t = QLabel("???????? ????"); t.setObjectName("title"); l.addWidget(t)
+        row = QHBoxLayout()
+        self.deep_path = QLabel("C:\\"); row.addWidget(self.deep_path)
+        b = QPushButton("??????? ?????"); b.clicked.connect(self.pick_deep); row.addWidget(b)
+        b2 = QPushButton("?????????"); b2.clicked.connect(self.deep_scan); row.addWidget(b2)
+        l.addLayout(row)
+        self.dlog = QTextEdit(); self.dlog.setReadOnly(True); l.addWidget(self.dlog, 1)
+        return w
+    def pick_deep(self):
+        d = QFileDialog.getExistingDirectory(self, "????? ??? ????????? ?????")
+        if d: self.deep_path.setText(d)
+    def deep_scan(self):
+        self.switch("deep")
+        self.run_engine(["deepscan", self.deep_path.text()], target=self.dlog)
+
+    def _optimize_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
+        t = QLabel("??????????? ??"); t.setObjectName("title"); l.addWidget(t)
+        b = QPushButton("?????????????"); b.clicked.connect(self.optimize); l.addWidget(b)
+        self.olog = QTextEdit(); self.olog.setReadOnly(True); l.addWidget(self.olog, 1)
+        return w
+    def optimize(self):
+        self.switch("optimize")
+        self.run_engine(["optimize"], target=self.olog)
 
     def _quarantine_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
