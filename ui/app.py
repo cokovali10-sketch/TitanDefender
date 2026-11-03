@@ -103,6 +103,7 @@ class App(QMainWindow):
         self.pages["deep"] = self._deep_page()
         self.pages["optimize"] = self._optimize_page()
         self.pages["quarantine"] = self._quarantine_page()
+        self.pages["whitelist"] = self._whitelist_page()
         self.pages["history"] = self._history_page()
         self.pages["settings"] = self._settings_page()
         for k, p in self.pages.items():
@@ -210,6 +211,22 @@ class App(QMainWindow):
         b = QPushButton("Обновить список"); b.clicked.connect(self.quarantine_list); l.addWidget(b)
         self.qlog = QTextEdit(); self.qlog.setReadOnly(True); l.addWidget(self.qlog, 1)
         return w
+
+    def _whitelist_page(self):
+        w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
+        t = QLabel("?????????? (whitelist)"); t.setObjectName("title"); l.addWidget(t)
+        row = QHBoxLayout()
+        self.wl_input = QLineEdit(); self.wl_input.setPlaceholderText("??? SHA256 ??? ?????????? ? ??????????")
+        row.addWidget(self.wl_input)
+        b = QPushButton("????????"); b.clicked.connect(self.add_whitelist); row.addWidget(b)
+        l.addLayout(row)
+        self.wl_log = QTextEdit(); self.wl_log.setReadOnly(True); l.addWidget(self.wl_log, 1)
+        return w
+    def add_whitelist(self):
+        h = self.wl_input.text().strip()
+        if h:
+            self.run_engine(["whitelist-add", h], target=self.wl_log)
+            self.wl_input.clear()
 
     def _history_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24)
