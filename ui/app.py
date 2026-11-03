@@ -1,134 +1,132 @@
-import subprocess, os, threading
-import tkinter as tk
-from tkinter import filedialog
+import subprocess, os, threading, sys
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QMessageBox)
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize
+from PyQt6.QtGui import QFont, QPalette, QColor, QIcon
 
 ENGINE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "titan.exe")
-ACCENT = "#8b5cf6"; ACCENT2 = "#06b6d4"; BG = "#080c18"; CARD = "#111827"; FG = "#f1f5f9"; MUTED = "#64748b"; BORDER = "#1e293b"
 
-class RoundedButton(tk.Canvas):
-    def __init__(self, parent, text, command, color=ACCENT, **kw):
-        super().__init__(parent, height=42, highlightthickness=0, bg=parent["bg"], cursor="hand2", **kw)
-        self.command = command; self.text = text; self.color = color; self.hover = False
-        self.bind("<Enter>", lambda e: (setattr(self,"hover",True), self._draw()))
-        self.bind("<Leave>", lambda e: (setattr(self,"hover",False), self._draw()))
-        self.bind("<Button-1>", lambda e: command())
-        self._draw()
-    def _draw(self):
-        self.delete("all")
-        w = self.winfo_width() or 160
-        h = 42
-        r = 12
-        c = "#a78bfa" if self.hover else self.color
-        self.create_rounded_rect(2,2,w-2,h-2,r,fill=c,outline="")
-        self.create_text(w//2, h//2, text=self.text, fill="white", font=("Segoe UI", 10, "bold"))
-    def create_rounded_rect(self, x1,y1,x2,y2,r,**kw):
-        self.create_arc(x1,y1,x1+2*r,y1+2*r,start=90,extent=90,style="pieslice",**kw)
-        self.create_arc(x2-2*r,y1,x2,y1+2*r,start=0,extent=90,style="pieslice",**kw)
-        self.create_arc(x1,y2-2*r,x1+2*r,y2,start=180,extent=90,style="pieslice",**kw)
-        self.create_arc(x2-2*r,y2-2*r,x2,y2,start=270,extent=90,style="pieslice",**kw)
-        self.create_rectangle(x1+r,y1,x2-r,y2,**kw)
-        self.create_rectangle(x1,y1+r,x2,y2-r,**kw)
+QSS = """
+QMainWindow { background: qlineargradient(x1:0,y1:0,x2:1,y2:1, stop:0 #0a0e1a, stop:1 #1a1033); }
+QLabel { color: #e2e8f0; font-family: 'Segoe UI'; }
+QPushButton {
+  background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4);
+  color: white; border: none; border-radius: 12px; padding: 12px 20px;
+  font-size: 13px; font-weight: 600;
+}
+QPushButton:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #8b5cf6, stop:1 #22d3ee); }
+QPushButton:disabled { background: #334155; color: #94a3b8; }
+QTextEdit {
+  background: #0f172a; color: #e2e8f0; border: 1px solid #1e293b;
+  border-radius: 12px; padding: 12px; font-family: Consolas; font-size: 11px;
+}
+QProgressBar {
+  background: #1e293b; border: none; border-radius: 6px; height: 8px; text-align: center;
+}
+QProgressBar::chunk { background: qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #7c3aed, stop:1 #06b6d4); border-radius: 6px; }
+QFrame#card { background: rgba(15,23,42,0.6); border: 1px solid #1e293b; border-radius: 16px; }
+"""
 
-class App(tk.Tk):
+class ScanWorker(QThread):
+    output = pyqtSignal(str)
+    finished = pyqtSignal()
+    def __init__(self, args):
+        super().__init__(); self.args = args
+    def run(self):
+        try:
+            r = subprocess.run([ENGINE] + self.args, capture_output=True, text=True, timeout=300)
+            self.output.emit(r.stdout)
+            if r.stderr: self.output.emit("\n" + r.stderr)
+        except Exception as e:
+            self.output.emit(f"Error: {e}")
+        self.finished.emit()
+
+class App(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title("TitanDefender")
-        self.geometry("980x680")
-        self.configure(bg=BG)
-        self.minsize(860, 560)
-        self.running = False
+        self.setWindowTitle("TitanDefender")
+        self.resize(1000, 700)
+        self.setStyleSheet(QSS)
+        self.worker = None
         self._build()
 
     def _build(self):
-        # header
-        hdr = tk.Frame(self, bg=BG)
-        hdr.pack(fill="x", padx=32, pady=(28, 6))
-        tk.Label(hdr, text="🛡️", font=("Segoe UI Emoji", 34), fg=ACCENT, bg=BG).pack(side="left")
-        box = tk.Frame(hdr, bg=BG)
-        box.pack(side="left", padx=12)
-        tk.Label(box, text="TitanDefender", font=("Segoe UI", 30, "bold"), fg="#c4b5fd", bg=BG).pack(anchor="w")
-        tk.Label(box, text="Modern Antivirus · Glassmorphism", font=("Segoe UI", 11), fg=MUTED, bg=BG).pack(anchor="w")
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+        layout.setContentsMargins(32, 28, 32, 20)
+        layout.setSpacing(16)
 
-        # status pill
-        self.pill = tk.Label(self, text="  ● Защищено  ", font=("Segoe UI", 10, "bold"), fg="#22c55e", bg="#0f172a", padx=14, pady=6)
-        self.pill.pack(anchor="w", padx=32, pady=(0,14))
-        tk.Label(self, text="?????????? ?????: ????? ?????? ????????, ???????? ?????? ????? ???????? ? ??????????????", font=("Segoe UI", 9), fg="#22c55e", bg=BG).pack(anchor="w", padx=32, pady=(0,8))
+        # header
+        hdr = QHBoxLayout()
+        title = QLabel("🛡️  TitanDefender")
+        title.setStyleSheet("font-size: 30px; font-weight: 800; color: #c4b5fd;")
+        hdr.addWidget(title)
+        sub = QLabel("Modern Antivirus · Glassmorphism")
+        sub.setStyleSheet("color: #64748b; font-size: 12px;")
+        hdr.addWidget(sub)
+        hdr.addStretch()
+        pill = QLabel("● Защищено")
+        pill.setStyleSheet("color: #22c55e; font-weight: 700; background: #0f172a; border-radius: 12px; padding: 6px 14px;")
+        hdr.addWidget(pill)
+        layout.addLayout(hdr)
+
+        # safety banner
+        safe = QLabel("Безопасный режим: файлы только читаются, удаление только через карантин с подтверждением")
+        safe.setStyleSheet("color: #22c55e; font-size: 10px;")
+        layout.addWidget(safe)
 
         # cards
-        cards = tk.Frame(self, bg=BG)
-        cards.pack(fill="x", padx=32, pady=8)
-        self.card_vals = {}
-        for i,(t,v) in enumerate([("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]):
-            c = tk.Frame(cards, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
-            c.grid(row=0, column=i, padx=8, sticky="nsew")
-            cards.columnconfigure(i, weight=1)
-            tk.Label(c, text=t, font=("Segoe UI", 9), fg=MUTED, bg=CARD).pack(anchor="w", padx=16, pady=(12,2))
-            lbl = tk.Label(c, text=v, font=("Segoe UI", 16, "bold"), fg=FG, bg=CARD)
-            lbl.pack(anchor="w", padx=16, pady=(0,12))
-            self.card_vals[t] = lbl
+        cards = QHBoxLayout()
+        for t, v in [("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]:
+            frame = QFrame(); frame.setObjectName("card")
+            fl = QVBoxLayout(frame); fl.setContentsMargins(16,12,16,12)
+            tl = QLabel(t); tl.setStyleSheet("color: #64748b; font-size: 10px;")
+            vl = QLabel(v); vl.setStyleSheet("color: #f1f5f9; font-size: 16px; font-weight: 700;")
+            fl.addWidget(tl); fl.addWidget(vl)
+            cards.addWidget(frame)
+        layout.addLayout(cards)
 
         # buttons
-        btns = tk.Frame(self, bg=BG)
-        btns.pack(fill="x", padx=32, pady=18)
-        for i,(txt,cmd) in enumerate([("⚡ Быстрое сканирование", self.quick_scan),("📁 Выбрать папку", self.custom_scan),("📋 Сигнатуры", self.list_sigs),("🔒 Карантин", self.quarantine_list)]):
-            b = RoundedButton(btns, txt, cmd)
-            b.grid(row=0, column=i, padx=6, sticky="ew")
-            btns.columnconfigure(i, weight=1)
+        btns = QHBoxLayout()
+        for txt, cmd in [("⚡ Быстрое сканирование", self.quick_scan), ("📁 Выбрать папку", self.custom_scan),
+                         ("📋 Сигнатуры", self.list_sigs), ("🔒 Карантин", self.quarantine_list)]:
+            b = QPushButton(txt); b.clicked.connect(cmd); btns.addWidget(b)
+        layout.addLayout(btns)
 
         # progress
-        self.progress = tk.Canvas(self, height=8, bg="#1e293b", highlightthickness=0)
-        self.progress.pack(fill="x", padx=32, pady=(6,6))
-        self.pbar = self.progress.create_rectangle(0,0,0,8, fill=ACCENT, width=0)
-        self._prog = 0; self._target = 0
-        self._animate()
+        self.progress = QProgressBar(); self.progress.setRange(0,100); self.progress.setValue(0)
+        layout.addWidget(self.progress)
 
         # log
-        logframe = tk.Frame(self, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
-        logframe.pack(fill="both", expand=True, padx=32, pady=12)
-        self.log = tk.Text(logframe, bg=CARD, fg=FG, font=("Consolas", 10), relief="flat", borderwidth=0, padx=14, pady=14, insertbackground=FG)
-        self.log.pack(fill="both", expand=True)
+        self.log = QTextEdit(); self.log.setReadOnly(True)
+        layout.addWidget(self.log, 1)
 
-        tk.Label(self, text="TitanDefender v0.3 · Rust engine + Python GUI", font=("Segoe UI", 9), fg=MUTED, bg=BG).pack(pady=8)
-
-    def _animate(self):
-        if self._prog < self._target:
-            self._prog = min(self._prog + 4, self._target)
-        w = self.progress.winfo_width()
-        self.progress.coords(self.pbar, 0, 0, int(w*self._prog/100), 8)
-        self.after(16, self._animate)
-
-    def set_progress(self, v): self._target = v
+        foot = QLabel("TitanDefender v0.4 · Rust engine + PyQt6 GUI")
+        foot.setStyleSheet("color: #475569; font-size: 9px;")
+        layout.addWidget(foot)
 
     def run_engine(self, args):
-        if self.running: return
-        self.running = True
-        self.set_progress(0)
-        self.pill.config(text="  ● Сканирование...  ", fg="#f59e0b")
-        self.log.delete("1.0", "end")
-        def worker():
-            try:
-                r = subprocess.run([ENGINE]+args, capture_output=True, text=True, timeout=300)
-                self.log.insert("end", r.stdout)
-                if r.stderr: self.log.insert("end", "\n"+r.stderr)
-                self.set_progress(100)
-            except Exception as e:
-                self.log.insert("end", f"Error: {e}")
-            finally:
-                self.running = False
-                self.pill.config(text="  ● Готов  ", fg="#22c55e")
-        threading.Thread(target=worker, daemon=True).start()
-        def tick():
-            if self.running and self._target < 95:
-                self.set_progress(self._target + 2)
-                self.after(250, tick)
-        self.after(250, tick)
+        if self.worker and self.worker.isRunning(): return
+        self.log.clear()
+        self.progress.setValue(0)
+        self.worker = ScanWorker(args)
+        self.worker.output.connect(lambda t: self.log.insertPlainText(t))
+        self.worker.finished.connect(lambda: self.progress.setValue(100))
+        self.worker.start()
 
     def quick_scan(self): self.run_engine(["scan","C:\\","--quick","--json"])
     def custom_scan(self):
-        d = filedialog.askdirectory()
+        d = QFileDialog.getExistingDirectory(self, "Выбрать папку")
         if d: self.run_engine(["scan", d])
     def list_sigs(self): self.run_engine(["list-sigs"])
     def quarantine_list(self): self.run_engine(["quarantines"])
 
+def main():
+    app = QApplication(sys.argv)
+    app.setStyleSheet(QSS)
+    w = App(); w.show()
+    sys.exit(app.exec())
+
 if __name__ == "__main__":
-    App().mainloop()
+    main()
