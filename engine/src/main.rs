@@ -47,6 +47,13 @@ fn sha256_file(path: &Path) -> Option<String> {
     Some(format!("{:x}", h.finalize()))
 }
 
+fn load_whitelist() -> Vec<String> {
+    let wl = dirs::home_dir().unwrap_or_default().join(".titan").join("whitelist.txt");
+    if let Ok(data) = fs::read_to_string(&wl) {
+        data.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect()
+    } else { Vec::new() }
+}
+
 fn load_sigs() -> SigDb {
     let candidates = ["signatures/hashes.json", "hashes.json", "../signatures/hashes.json"];
     for c in candidates {
@@ -160,7 +167,16 @@ fn main() {
     let cli = Cli::parse();
     match cli.cmd {
         Commands::Scan { path, quick, json: j } => {
-            let hits = scan_path(Path::new(&path), quick);
+            let mut hits = scan_path(Path::new(&path), quick);
+            let wl = load_whitelist();
+            hits.retain(|h| !wl.contains(&h.hash));
+            // log
+            let logpath = dirs::home_dir().unwrap_or_default().join(".titan").join("scan.log");
+            fs::create_dir_all(logpath.parent().unwrap()).ok();
+            use std::io::Write;
+            if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&logpath) {
+                writeln!(f, "{} scan {} threats={}", chrono::Local::now(), path, hits.len()).ok();
+            }
             if j { println!("{}", serde_json::to_string_pretty(&hits).unwrap()); }
             else if hits.is_empty() { println!("No threats found."); }
             else { for h in &hits { println!("[{}] {} -> {}", h.severity, h.threat, h.path); } println!("Total threats: {}", hits.len()); }
