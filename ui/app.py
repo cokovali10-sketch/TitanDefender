@@ -127,7 +127,21 @@ class App(QMainWindow):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(16)
         t = QLabel("Панель управления"); t.setObjectName("title"); l.addWidget(t)
         cards = QHBoxLayout()
-        for tt, vv in [("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]:
+        last = "—"
+        threats = 0
+        try:
+            data = json.load(open(HISTORY, encoding="utf-8"))
+            if data:
+                last = data[-1]["time"][:19].replace("T"," ")
+                threats = sum(d.get("output","").count("THREAT") for d in data)
+        except Exception: pass
+        try:
+            import psutil
+            cpu = f"{psutil.cpu_percent()}%"
+            mem = f"{psutil.virtual_memory().percent}%"
+        except Exception:
+            cpu = "n/a"; mem = "n/a"
+        for tt, vv in [("????????? ????????????", last),("????? ???????", str(threats)),("CPU", cpu),("??????", mem)]:
             self._card(cards, tt, vv)
         l.addLayout(cards)
         qa = QHBoxLayout()
