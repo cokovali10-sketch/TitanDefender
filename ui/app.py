@@ -1,7 +1,6 @@
 import subprocess, os, threading, sys, json, datetime
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget,
-    QSizePolicy, QScrollArea)
+    QLabel, QPushButton, QTextEdit, QProgressBar, QFrame, QFileDialog, QStackedWidget)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QColor
 
@@ -42,9 +41,9 @@ class ScanWorker(QThread):
         try:
             data = []
             if os.path.exists(HISTORY):
-                data = json.load(open(HISTORY))
+                data = json.load(open(HISTORY, encoding="utf-8"))
             data.append({"time": datetime.datetime.now().isoformat(), "args": self.args, "output": (out or "")[:1500]})
-            json.dump(data[-100:], open(HISTORY, "w"), indent=2)
+            json.dump(data[-100:], open(HISTORY, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
         except Exception: pass
 
 class App(QMainWindow):
@@ -60,10 +59,9 @@ class App(QMainWindow):
         central = QWidget(); self.setCentralWidget(central)
         root = QHBoxLayout(central); root.setContentsMargins(0,0,0,0); root.setSpacing(0)
 
-        # sidebar
         side = QWidget(); side.setFixedWidth(220); side.setStyleSheet("background: #080c18;")
         sl = QVBoxLayout(side); sl.setContentsMargins(12,20,12,20); sl.setSpacing(4)
-        logo = QLabel("🛡️ TitanDefender"); logo.setStyleSheet("font-size: 18px; font-weight: 800; color: #c4b5fd; padding: 8px;")
+        logo = QLabel("🛡️  TitanDefender"); logo.setStyleSheet("font-size: 18px; font-weight: 800; color: #c4b5fd; padding: 8px;")
         sl.addWidget(logo)
         sl.addSpacing(12)
         self.nav_btns = {}
@@ -76,7 +74,6 @@ class App(QMainWindow):
         sl.addWidget(safe)
         root.addWidget(side)
 
-        # content stack
         self.stack = QStackedWidget()
         root.addWidget(self.stack, 1)
 
@@ -113,6 +110,11 @@ class App(QMainWindow):
         for tt, vv in [("Последнее сканирование","2 мин назад"),("Угрозы","0"),("Сигнатуры","100"),("Статус","Активен")]:
             self._card(cards, tt, vv)
         l.addLayout(cards)
+        qa = QHBoxLayout()
+        b1 = QPushButton("⚡ Оптимизировать ПК"); b1.clicked.connect(lambda: (self.switch("optimize"), self.optimize()))
+        b2 = QPushButton("🔬 Глубокий скан"); b2.clicked.connect(lambda: self.switch("deep"))
+        qa.addWidget(b1); qa.addWidget(b2); qa.addStretch()
+        l.addLayout(qa)
         l.addStretch()
         return w
 
@@ -131,16 +133,16 @@ class App(QMainWindow):
 
     def _deep_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
-        t = QLabel("???????? ????"); t.setObjectName("title"); l.addWidget(t)
+        t = QLabel("Глубокий скан"); t.setObjectName("title"); l.addWidget(t)
         row = QHBoxLayout()
         self.deep_path = QLabel("C:\\"); row.addWidget(self.deep_path)
-        b = QPushButton("??????? ?????"); b.clicked.connect(self.pick_deep); row.addWidget(b)
-        b2 = QPushButton("?????????"); b2.clicked.connect(self.deep_scan); row.addWidget(b2)
+        b = QPushButton("Выбрать папку"); b.clicked.connect(self.pick_deep); row.addWidget(b)
+        b2 = QPushButton("Запустить"); b2.clicked.connect(self.deep_scan); row.addWidget(b2)
         l.addLayout(row)
         self.dlog = QTextEdit(); self.dlog.setReadOnly(True); l.addWidget(self.dlog, 1)
         return w
     def pick_deep(self):
-        d = QFileDialog.getExistingDirectory(self, "????? ??? ????????? ?????")
+        d = QFileDialog.getExistingDirectory(self, "Папка для глубокого скана")
         if d: self.deep_path.setText(d)
     def deep_scan(self):
         self.switch("deep")
@@ -148,8 +150,8 @@ class App(QMainWindow):
 
     def _optimize_page(self):
         w = QWidget(); l = QVBoxLayout(w); l.setContentsMargins(24,24,24,24); l.setSpacing(12)
-        t = QLabel("??????????? ??"); t.setObjectName("title"); l.addWidget(t)
-        b = QPushButton("?????????????"); b.clicked.connect(self.optimize); l.addWidget(b)
+        t = QLabel("Оптимизация ПК"); t.setObjectName("title"); l.addWidget(t)
+        b = QPushButton("Анализировать"); b.clicked.connect(self.optimize); l.addWidget(b)
         self.olog = QTextEdit(); self.olog.setReadOnly(True); l.addWidget(self.olog, 1)
         return w
     def optimize(self):
@@ -205,7 +207,7 @@ class App(QMainWindow):
         self.run_engine(["quarantines"], target=self.qlog)
     def load_history(self):
         try:
-            data = json.load(open(HISTORY))
+            data = json.load(open(HISTORY, encoding="utf-8"))
             self.hlog.clear()
             for e in reversed(data):
                 self.hlog.append(f"[{e['time']}] {e['args']}\n{e['output'][:300]}\n{'-'*40}")
