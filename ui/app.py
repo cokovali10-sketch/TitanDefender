@@ -100,6 +100,12 @@ class App(QMainWindow):
         self.stack = QStackedWidget()
         root.addWidget(self.stack, 1)
 
+        # status bar
+        self.statusbar = QLabel("TitanDefender v0.5  |  Engine: ready  |  ????????: 100")
+        self.statusbar.setStyleSheet("background: #080c18; color: #64748b; font-size: 10px; padding: 4px 12px;")
+        self.statusbar.setFixedHeight(22)
+        root.addWidget(self.statusbar)
+
         self.pages = {}
         self.pages["dashboard"] = self._dashboard_page()
         self.pages["scan"] = self._scan_page()
